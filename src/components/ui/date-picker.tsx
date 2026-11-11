@@ -77,7 +77,7 @@ export function DatePicker({
             {value ? formatFullDate(value) : placeholder}
           </span>
         </PopoverTrigger>
-        <PopoverContent className="p-0">
+        <PopoverContent className="p-0" onOpenAutoFocus={focusCalendarDay}>
           <DatePickerCalendar value={value} onChoose={choose} />
         </PopoverContent>
       </Popover>
@@ -93,6 +93,22 @@ export function DatePicker({
       {name ? <input type="hidden" name={name} value={value ?? ""} /> : null}
     </div>
   );
+}
+
+/**
+ * При открытии фокус — на выбранный день или на сегодня (календарь помечает его
+ * data-focused), чтобы стрелки сразу двигали день. Без этого Radix ставил фокус
+ * на первую кнопку панели — «Перейти к предыдущему месяцу».
+ */
+function focusCalendarDay(event: Event) {
+  const day =
+    event.currentTarget instanceof HTMLElement
+      ? event.currentTarget.querySelector<HTMLElement>('[data-focused="true"] button')
+      : null;
+  if (day) {
+    event.preventDefault();
+    day.focus();
+  }
 }
 
 /**
