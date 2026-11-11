@@ -13,3 +13,10 @@ docs
 *.md
 Dockerfile
 docker-compose.yml
+# Тесты и их настройки в образ не нужны (папка tests исключена выше,
+# поэтому и тесты рядом с кодом исключаем — иначе не пройдёт проверка типов при сборке)
+**/*.test.ts
+**/*.test.tsx
+vitest.config.mts
+playwright.config.ts
+deploy
