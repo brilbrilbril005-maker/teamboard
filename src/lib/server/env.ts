@@ -14,7 +14,7 @@ const booleanFlag = (defaultValue: boolean) =>
     .transform((value) => (value === undefined ? defaultValue : value === "true" || value === "1"));
 
 const MIN_SECRET_LENGTH = 32;
-const MIN_DEMO_PASSWORD_LENGTH = 8;
+const MIN_DEMO_PASSWORD_LENGTH = 12;
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),

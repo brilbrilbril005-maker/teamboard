@@ -65,7 +65,21 @@ describe("rate limiter", () => {
     await expect(limiter.consume("reset", RULE, START)).resolves.toBeUndefined();
   });
 
-  it("does not let parallel attempts slip past the limit", async () => {
+  it("keeps the window open until exactly its last second", async () => {
+    for (let attempt = 0; attempt < RULE.limit; attempt += 1) {
+      await limiter.consume("boundary", RULE, START);
+    }
+
+    await expect(limiter.consume("boundary", RULE, secondsLater(59))).rejects.toBeInstanceOf(
+      RateLimitedError,
+    );
+    await expect(limiter.consume("boundary", RULE, secondsLater(60))).resolves.toBeUndefined();
+  });
+
+  // База в памяти выполняет запросы по одному, поэтому этот тест проверяет подсчёт
+  // при одновременных вызовах, но не гонку между соединениями. От гонки защищает сам
+  // запрос: счётчик меняется одной командой INSERT ... ON CONFLICT DO UPDATE.
+  it("counts every attempt when calls are issued at the same time", async () => {
     const attempts = Array.from({ length: 10 }, () =>
       limiter.consume("parallel", RULE, START).then(
         () => "allowed" as const,
@@ -76,5 +90,21 @@ describe("rate limiter", () => {
     const outcomes = await Promise.all(attempts);
 
     expect(outcomes.filter((outcome) => outcome === "allowed")).toHaveLength(RULE.limit);
+  });
+
+  it("purges only counters older than a day", async () => {
+    await limiter.consume("stale", RULE, new Date(START.getTime() - 25 * 60 * 60 * 1000));
+    await limiter.consume("fresh", RULE, START);
+
+    const deleted = await limiter.purgeStale(START);
+
+    expect(deleted).toBeGreaterThanOrEqual(1);
+    // «Свежий» счётчик сохранился: вторая попытка считается второй, а не первой.
+    for (let attempt = 1; attempt < RULE.limit; attempt += 1) {
+      await limiter.consume("fresh", RULE, START);
+    }
+    await expect(limiter.consume("fresh", RULE, START)).rejects.toBeInstanceOf(RateLimitedError);
+    // «Старый» удалён: счёт начинается заново.
+    await expect(limiter.consume("stale", RULE, START)).resolves.toBeUndefined();
   });
 });

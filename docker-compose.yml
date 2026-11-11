@@ -32,7 +32,10 @@ services:
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     ports:
-      - "${APP_PORT:-3000}:3000"
+      # По умолчанию приложение слушает только локальный адрес сервера: наружу его
+      # отдаёт обратный прокси (nginx, Caddy) с HTTPS. Так нельзя обойти прокси и
+      # подделать адрес клиента. Чтобы открыть порт напрямую: APP_BIND=0.0.0.0
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
 
 volumes:
   db-data:

@@ -19,3 +19,6 @@ export const DEMO_USERNAME = "anna";
 export function normalizeUsername(username: string): string {
   return username.trim().toLowerCase();
 }
+
+/** Префикс cookie сессии. Общий для настройки авторизации и для proxy.ts. */
+export const AUTH_COOKIE_PREFIX = "teamboard";

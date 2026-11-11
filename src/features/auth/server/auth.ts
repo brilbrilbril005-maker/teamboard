@@ -6,6 +6,7 @@ import { username } from "better-auth/plugins";
 import * as schema from "@/db/schema";
 import type { Database } from "@/db/types";
 import {
+  AUTH_COOKIE_PREFIX,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
@@ -16,9 +17,6 @@ import {
 const SECONDS_IN_DAY = 60 * 60 * 24;
 const SESSION_LIFETIME_SECONDS = SECONDS_IN_DAY * 7;
 const SESSION_REFRESH_AFTER_SECONDS = SECONDS_IN_DAY;
-
-/** Префикс cookie сессии. Его же использует proxy.ts для быстрой проверки. */
-export const AUTH_COOKIE_PREFIX = "teamboard";
 
 export type AuthConfig = {
   readonly db: Database;

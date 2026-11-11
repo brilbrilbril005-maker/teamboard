@@ -51,4 +51,31 @@ describe("logger", () => {
 
     expect(lastEntry(spy)).toMatchObject({ error: { message: "connection lost" } });
   });
+
+  it("never writes query parameters of a database error", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const driverError = Object.assign(new Error("connection terminated"), { code: "57P01" });
+    const queryError = Object.assign(
+      new Error(
+        "Failed query: insert into sessions (token) values ($1)\nparams: secret-session-token",
+      ),
+      {
+        query: "insert into sessions (token) values ($1)",
+        params: ["secret-session-token"],
+        cause: driverError,
+      },
+    );
+
+    logger.error("action:auth.signIn", queryError);
+
+    const written = String(spy.mock.calls.at(-1)?.[0]);
+    expect(written).not.toContain("secret-session-token");
+    expect(lastEntry(spy)).toMatchObject({
+      error: {
+        message: "database query failed",
+        query: "insert into sessions (token) values ($1)",
+        cause: { message: "connection terminated", code: "57P01" },
+      },
+    });
+  });
 });

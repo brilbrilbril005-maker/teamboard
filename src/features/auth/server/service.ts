@@ -40,9 +40,16 @@ const USERNAME_TAKEN_CODES: readonly string[] = [
   "USER_ALREADY_EXISTS",
   "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL",
 ];
+/**
+ * Всё, что при входе означает «такой пары логин-пароль нет». Сюда же относятся
+ * отказы библиотеки по формату логина: при входе правила логина не раскрываем.
+ */
 const INVALID_CREDENTIALS_CODES: readonly string[] = [
   "INVALID_USERNAME_OR_PASSWORD",
   "INVALID_EMAIL_OR_PASSWORD",
+  "INVALID_USERNAME",
+  "USERNAME_TOO_SHORT",
+  "USERNAME_TOO_LONG",
 ];
 
 /**
@@ -55,8 +62,9 @@ export function toInternalEmail(username: string): string {
 
 type AuthUser = { id: string; name: string; username?: string | null };
 
-function toCurrentUser(user: AuthUser, fallbackUsername = ""): CurrentUser {
-  return { id: user.id, name: user.name, username: user.username ?? fallbackUsername };
+/** Аккаунт без логина (такого наше приложение не создаёт) пользователем не считается. */
+function toCurrentUser(user: AuthUser): CurrentUser | null {
+  return user.username ? { id: user.id, name: user.name, username: user.username } : null;
 }
 
 function getApiErrorCode(error: unknown): string | undefined {
@@ -100,10 +108,11 @@ export function createAuthService({ auth, rateLimiter, demoPassword }: AuthServi
         body: { username: credentials.username, password: credentials.password },
         headers: request.headers,
       });
-      if (!result) {
+      const user = result ? toCurrentUser(result.user) : null;
+      if (!user) {
         throw new ValidationError(INVALID_CREDENTIALS_MESSAGE);
       }
-      return toCurrentUser(result.user, credentials.username);
+      return user;
     } catch (error) {
       throw translateAuthError(error);
     }
@@ -111,11 +120,12 @@ export function createAuthService({ auth, rateLimiter, demoPassword }: AuthServi
 
   async function signIn(credentials: SignInData, request: RequestContext): Promise<CurrentUser> {
     const perClientKey = `sign-in:${request.clientIp}:${credentials.username}`;
+    // Сначала лимит адреса: запросы, отбитые по нему, не расходуют общий лимит логина.
+    await rateLimiter.consume(perClientKey, SIGN_IN_RATE_LIMIT);
     await rateLimiter.consume(
       `sign-in:any:${credentials.username}`,
       SIGN_IN_PER_USERNAME_RATE_LIMIT,
     );
-    await rateLimiter.consume(perClientKey, SIGN_IN_RATE_LIMIT);
 
     const user = await authenticate(credentials, request);
     // Счётчик адреса сбрасываем после успеха; общий счётчик логина — нет,
@@ -139,7 +149,8 @@ export function createAuthService({ auth, rateLimiter, demoPassword }: AuthServi
           },
           headers: request.headers,
         });
-        return toCurrentUser(result.user, data.username);
+        // Логин только что прошёл нашу проверку, берём его из данных формы.
+        return { id: result.user.id, name: result.user.name, username: data.username };
       } catch (error) {
         throw translateAuthError(error);
       }

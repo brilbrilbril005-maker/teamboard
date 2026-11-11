@@ -1,9 +1,7 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
+import { AUTH_COOKIE_PREFIX } from "@/features/auth/model";
 import { PUBLIC_ROUTES, ROUTES } from "@/lib/routes";
-
-/** Должен совпадать с AUTH_COOKIE_PREFIX в features/auth/server/auth.ts. */
-const AUTH_COOKIE_PREFIX = "teamboard";
 
 /**
  * Быстрая предварительная проверка: есть ли cookie сессии.
@@ -24,5 +22,8 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Всё, кроме служебных адресов Next.js, проверки здоровья и статических файлов.
-  matcher: ["/((?!api/health|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)"],
+  // Расширения перечислены явно: адрес вида /tasks/отчёт.v2 не должен обходить проверку.
+  matcher: [
+    "/((?!api/health$|_next/static|_next/image|favicon\\.ico$|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff2|txt|xml|webmanifest)$).*)",
+  ],
 };

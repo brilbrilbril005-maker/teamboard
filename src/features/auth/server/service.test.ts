@@ -138,6 +138,18 @@ describe("auth service: sign in", () => {
     );
   });
 
+  it.each(["a-b", "ab", "анна", "a".repeat(20) + "!"])(
+    "answers a malformed login %s like any other wrong credentials",
+    async (username) => {
+      const error = await service
+        .signIn({ username, password: PASSWORD }, createRequestContext("198.51.100.30"))
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(ValidationError);
+      expect((error as ValidationError).message).toBe("Неверный логин или пароль");
+    },
+  );
+
   it("blocks further attempts after too many failures", async () => {
     const request = createRequestContext("198.51.100.9");
     for (let attempt = 0; attempt < SIGN_IN_RATE_LIMIT.limit; attempt += 1) {
@@ -169,6 +181,26 @@ describe("auth service: sign in", () => {
 });
 
 describe("auth service: brute force across addresses", () => {
+  it("does not spend the per-login budget on attempts already rejected by the per-address limit", async () => {
+    await service.signUp(
+      { username: "budget", name: "Бюджет", password: PASSWORD },
+      createRequestContext("198.51.100.21"),
+    );
+    const noisy = createRequestContext("198.51.100.22");
+    for (let attempt = 0; attempt < SIGN_IN_PER_USERNAME_RATE_LIMIT.limit + 5; attempt += 1) {
+      await service
+        .signIn({ username: "budget", password: "wrong-password" }, noisy)
+        .catch(() => undefined);
+    }
+
+    const user = await service.signIn(
+      { username: "budget", password: PASSWORD },
+      createRequestContext("198.51.100.23"),
+    );
+
+    expect(user.username).toBe("budget");
+  });
+
   it("caps attempts per login even when every attempt comes from a new address", async () => {
     await service.signUp(
       { username: "target", name: "Цель", password: PASSWORD },

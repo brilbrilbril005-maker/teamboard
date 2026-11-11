@@ -8,11 +8,36 @@ import "server-only";
 
 type LogContext = Readonly<Record<string, unknown>>;
 
-function serializeError(error: unknown): Record<string, unknown> {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message, stack: error.stack };
+const MAX_CAUSE_DEPTH = 3;
+
+/** Ошибка запроса к базе (Drizzle): в её тексте и стеке лежат значения параметров. */
+function isQueryError(error: Error): error is Error & { query: unknown } {
+  return "query" in error && "params" in error;
+}
+
+/**
+ * Параметры запросов в журнал не пишутся никогда: среди них бывают токены сессий,
+ * хэши паролей и логины. Для ошибок базы остаются только текст запроса
+ * (с местозаполнителями) и исходная причина от драйвера.
+ */
+function serializeError(error: unknown, depth = 0): Record<string, unknown> {
+  if (!(error instanceof Error)) {
+    return { message: String(error) };
   }
-  return { message: String(error) };
+  const cause =
+    error.cause !== undefined && depth < MAX_CAUSE_DEPTH
+      ? { cause: serializeError(error.cause, depth + 1) }
+      : {};
+  if (isQueryError(error)) {
+    return {
+      name: error.name,
+      message: "database query failed",
+      query: String(error.query),
+      ...cause,
+    };
+  }
+  const code = "code" in error && typeof error.code === "string" ? { code: error.code } : {};
+  return { name: error.name, message: error.message, ...code, stack: error.stack, ...cause };
 }
 
 function write(
