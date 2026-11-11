@@ -3,7 +3,7 @@ import { expect, test, uniqueUsername } from "./fixtures";
 
 const PASSWORD = "e2e-password-123";
 
-// Next.js держит предыдущие страницы в документе скрытыми (см. CLAUDE.md, «Сквозные тесты»),
+// Next.js держит предыдущие страницы в документе скрытыми (см. CLAUDE.md, «Особенности»),
 // поэтому поля ищем по роли — такой поиск видит только то, что видит пользователь.
 // У поля пароля роли нет, для него явно берём видимое.
 const loginField = (page: Page) => page.getByRole("textbox", { name: "Логин" });
@@ -83,13 +83,23 @@ test.describe("вход и регистрация", () => {
     await expect(page).toHaveURL(/\/register$/);
   });
 
-  test("неверный пароль не пускает и не раскрывает, существует ли логин", async ({ page }) => {
-    await page.goto("/login");
-    await loginField(page).fill("anna");
-    await passwordField(page).fill("wrong-password");
-    await page.getByRole("button", { name: "Войти", exact: true }).click();
+  test("неверный пароль и несуществующий логин дают один и тот же ответ", async ({ page }) => {
+    // Сообщение ищем внутри формы: у Next.js есть собственный служебный элемент с ролью alert.
+    const formError = page.locator("form").getByRole("alert");
+    const submit = page.getByRole("button", { name: "Войти", exact: true });
 
-    await expect(page.getByText("Неверный логин или пароль")).toBeVisible();
+    await page.goto("/login");
+    await loginField(page).fill("olga");
+    await passwordField(page).fill("wrong-password");
+    await submit.click();
+    await expect(formError).toHaveText("Неверный логин или пароль");
+
+    await page.reload();
+    await loginField(page).fill(uniqueUsername("ghost"));
+    await passwordField(page).fill("wrong-password");
+    await submit.click();
+    await expect(formError).toHaveText("Неверный логин или пароль");
+
     await expect(page).toHaveURL(/\/login$/);
   });
 

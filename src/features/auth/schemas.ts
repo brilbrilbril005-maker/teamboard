@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasNoNulCharacter, INVALID_CHARACTERS_MESSAGE } from "@/lib/text";
 import {
   DISPLAY_NAME_MAX_LENGTH,
   PASSWORD_MAX_LENGTH,
@@ -27,6 +28,7 @@ export const displayNameSchema = z
   .string()
   .trim()
   .min(1, "Укажите имя")
+  .refine(hasNoNulCharacter, INVALID_CHARACTERS_MESSAGE)
   .max(DISPLAY_NAME_MAX_LENGTH, `Имя — не длиннее ${DISPLAY_NAME_MAX_LENGTH} символов`);
 
 export const signUpSchema = z.object({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isTaskOverdue, toIsoDate } from "./model";
+import { isTaskOverdue } from "./model";
 
 const TODAY = "2026-11-11";
 
@@ -18,14 +18,5 @@ describe("isTaskOverdue", () => {
 
   it("is false for a task without a due date", () => {
     expect(isTaskOverdue({ status: "new", dueDate: null }, TODAY)).toBe(false);
-  });
-});
-
-describe("toIsoDate", () => {
-  it("formats a date as YYYY-MM-DD in the given time zone", () => {
-    const lateEveningUtc = new Date("2026-11-11T22:30:00.000Z");
-
-    expect(toIsoDate(lateEveningUtc, "UTC")).toBe("2026-11-11");
-    expect(toIsoDate(lateEveningUtc, "Europe/Moscow")).toBe("2026-11-12");
   });
 });

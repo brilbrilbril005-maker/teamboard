@@ -22,6 +22,16 @@ describe("createTaskSchema", () => {
     });
   });
 
+  it("rejects text with a NUL character instead of failing in the database", () => {
+    const result = createTaskSchema.safeParse({ title: "a\u0000b", description: "c\u0000" });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual([
+      "title",
+      "description",
+    ]);
+  });
+
   it("rejects a blank title", () => {
     expect(createTaskSchema.safeParse({ title: "   " }).success).toBe(false);
   });
@@ -114,13 +124,13 @@ describe("parseTaskFilters", () => {
       search: "отчёт",
       statuses: ["new", "in_progress"],
       priorities: ["high"],
-      assigneeId: USER_ID,
+      assignee: { kind: "member", id: USER_ID },
       overdueOnly: true,
     });
   });
 
   it("supports the «unassigned» filter", () => {
-    expect(parseTaskFilters({ assignee: "none" })).toEqual({ assigneeId: "none" });
+    expect(parseTaskFilters({ assignee: "none" })).toEqual({ assignee: { kind: "unassigned" } });
   });
 
   it("silently drops unknown and malformed values", () => {
@@ -136,6 +146,14 @@ describe("parseTaskFilters", () => {
 
   it("uses the first value when a parameter is repeated", () => {
     expect(parseTaskFilters({ q: ["первый", "второй"] })).toEqual({ search: "первый" });
+  });
+
+  it("takes only the first value when a list filter is repeated", () => {
+    expect(parseTaskFilters({ status: ["new", "done"] })).toEqual({ statuses: ["new"] });
+  });
+
+  it("removes characters the database cannot store from the search", () => {
+    expect(parseTaskFilters({ q: "от\u0000чёт" })).toEqual({ search: "отчёт" });
   });
 
   it("limits the search length", () => {

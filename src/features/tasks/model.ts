@@ -1,4 +1,5 @@
 import type { TeamMember } from "@/features/users/model";
+import type { IsoDate } from "@/lib/dates";
 
 /**
  * Предметная модель задач. Файл чистый: без базы, без Next.js.
@@ -31,9 +32,6 @@ export const TASK_TITLE_MAX_LENGTH = 200;
 export const TASK_DESCRIPTION_MAX_LENGTH = 5000;
 export const TASK_SEARCH_MAX_LENGTH = 100;
 
-/** Дата без времени в формате ГГГГ-ММ-ДД. Так дедлайн не «съезжает» из-за часовых поясов. */
-export type IsoDate = string;
-
 export type Task = {
   readonly id: string;
   readonly title: string;
@@ -47,33 +45,28 @@ export type Task = {
   readonly updatedAt: Date;
 };
 
-/** Значение фильтра «без ответственного». */
-export const UNASSIGNED_FILTER = "none";
+/** Фильтр по ответственному: конкретный участник либо «без ответственного». */
+export type AssigneeFilter =
+  { readonly kind: "member"; readonly id: string } | { readonly kind: "unassigned" };
+
+/** Значение параметра адресной строки для «без ответственного»: ?assignee=none */
+export const UNASSIGNED_PARAM = "none";
 
 export type TaskFilters = {
   readonly search?: string;
   readonly statuses?: readonly TaskStatus[];
   readonly priorities?: readonly TaskPriority[];
-  /** Идентификатор участника либо UNASSIGNED_FILTER. */
-  readonly assigneeId?: string;
+  readonly assignee?: AssigneeFilter;
   readonly overdueOnly?: boolean;
 };
 
-/** Просрочена ли задача на указанную дату. Завершённые просроченными не считаются. */
+/**
+ * Просрочена ли задача на указанную дату. Завершённые просроченными не считаются.
+ * «Сегодня» берётся из todayIso() (src/lib/dates.ts) — в часовом поясе команды.
+ */
 export function isTaskOverdue(task: Pick<Task, "status" | "dueDate">, today: IsoDate): boolean {
   if (task.dueDate === null || task.status === "done") {
     return false;
   }
   return task.dueDate < today;
-}
-
-/** Сегодняшняя дата в формате ГГГГ-ММ-ДД в указанном часовом поясе. */
-export function toIsoDate(date: Date, timeZone?: string): IsoDate {
-  // Локаль en-CA даёт формат ГГГГ-ММ-ДД.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
 }

@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { ForbiddenError, INTERNAL_ERROR_MESSAGE, UnauthenticatedError } from "@/lib/errors";
+import {
+  ForbiddenError,
+  INTERNAL_ERROR_MESSAGE,
+  RateLimitedError,
+  UnauthenticatedError,
+} from "@/lib/errors";
 import { createAction, publicAction } from "./action";
 import { logger } from "./logger";
 
@@ -80,6 +85,19 @@ describe("createAction", () => {
     expect(result).toEqual({
       ok: false,
       error: { code: "FORBIDDEN", message: "Удалить задачу может только автор" },
+    });
+  });
+
+  it("tells the client when to retry after a rate limit", async () => {
+    const action = publicAction("test.limited", schema, async () => {
+      throw new RateLimitedError(42);
+    });
+
+    const result = await action({ title: "a" });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "RATE_LIMITED", retryAfterSeconds: 42 },
     });
   });
 

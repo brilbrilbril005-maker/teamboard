@@ -2,7 +2,8 @@ import "server-only";
 import { count, inArray } from "drizzle-orm";
 import type { Auth } from "@/features/auth/server/auth";
 import { toInternalEmail } from "@/features/auth/server/service";
-import { toIsoDate, type TaskPriority, type TaskStatus } from "@/features/tasks/model";
+import type { TaskPriority, TaskStatus } from "@/features/tasks/model";
+import { isoDateFromToday } from "@/lib/dates";
 import { sessions, tasks, users } from "./schema";
 import type { Database } from "./types";
 
@@ -11,8 +12,6 @@ import type { Database } from "./types";
  * Дедлайны считаются от текущей даты, поэтому демо всегда выглядит «живым»:
  * есть и просроченная задача, и задачи на ближайшие дни.
  */
-
-const MS_IN_DAY = 24 * 60 * 60 * 1000;
 
 const DEMO_USERS = [
   { username: "anna", name: "Анна Смирнова" },
@@ -120,7 +119,11 @@ const DEMO_TASKS: readonly DemoTask[] = [
 
 export type SeedOptions = {
   readonly db: Database;
-  readonly auth: Auth;
+  /**
+   * Создаёт авторизацию поверх переданного подключения. Нужна фабрика, а не готовый
+   * объект: пользователи создаются внутри транзакции, и авторизация должна писать в неё же.
+   */
+  readonly authFor: (db: Database) => Auth;
   /** Общий пароль демо-аккаунтов. */
   readonly password: string;
   readonly now?: Date;
@@ -168,32 +171,35 @@ function requireId(ids: Map<DemoUsername, string>, username: DemoUsername): stri
   return id;
 }
 
-/** Заполняет базу демо-данными. Если в базе уже есть пользователи — ничего не делает. */
+/**
+ * Заполняет базу демо-данными. Если в базе уже есть пользователи — ничего не делает.
+ * Всё выполняется одной транзакцией: при любом сбое база остаётся пустой,
+ * и следующий запуск повторит попытку целиком (половинчатых данных не бывает).
+ */
 export async function seedDemoData({
   db,
-  auth,
+  authFor,
   password,
   now = new Date(),
 }: SeedOptions): Promise<SeedResult> {
-  const [existing] = await db.select({ value: count() }).from(users);
-  if ((existing?.value ?? 0) > 0) {
-    return { seeded: false, users: 0, tasks: 0 };
-  }
+  return db.transaction(async (tx) => {
+    const [existing] = await tx.select({ value: count() }).from(users);
+    if ((existing?.value ?? 0) > 0) {
+      return { seeded: false, users: 0, tasks: 0 };
+    }
 
-  const ids = await createDemoUsers(db, auth, password);
-  const rows = DEMO_TASKS.map((task) => ({
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-    dueDate:
-      task.dueInDays === null
-        ? null
-        : toIsoDate(new Date(now.getTime() + task.dueInDays * MS_IN_DAY)),
-    creatorId: requireId(ids, task.creator),
-    assigneeId: task.assignee === null ? null : requireId(ids, task.assignee),
-  }));
-  await db.insert(tasks).values(rows);
+    const ids = await createDemoUsers(tx, authFor(tx), password);
+    const rows = DEMO_TASKS.map((task) => ({
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueInDays === null ? null : isoDateFromToday(task.dueInDays, now),
+      creatorId: requireId(ids, task.creator),
+      assigneeId: task.assignee === null ? null : requireId(ids, task.assignee),
+    }));
+    await tx.insert(tasks).values(rows);
 
-  return { seeded: true, users: DEMO_USERS.length, tasks: rows.length };
+    return { seeded: true, users: DEMO_USERS.length, tasks: rows.length };
+  });
 }

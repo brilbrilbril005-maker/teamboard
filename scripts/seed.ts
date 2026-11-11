@@ -5,7 +5,7 @@
 import { getDb, getPool } from "@/db/client";
 import { runMigrations } from "@/db/migrate";
 import { seedDemoData } from "@/db/seed";
-import { getAuth } from "@/features/auth/server";
+import { createAuthFor } from "@/features/auth/server";
 import { getEnv } from "@/lib/server/env";
 
 async function main(): Promise<void> {
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
     throw new Error("Задайте DEMO_PASSWORD в .env.local — это пароль демо-аккаунтов");
   }
   await runMigrations(getPool());
-  const result = await seedDemoData({ db: getDb(), auth: getAuth(), password });
+  const result = await seedDemoData({ db: getDb(), authFor: createAuthFor, password });
   console.info(
     result.seeded
       ? `Готово: пользователей — ${result.users}, задач — ${result.tasks}`

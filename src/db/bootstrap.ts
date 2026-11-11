@@ -1,8 +1,9 @@
 import "server-only";
-import { getAuth } from "@/features/auth/server";
+import { createAuthFor } from "@/features/auth/server";
 import { getEnv } from "@/lib/server/env";
 import { logger } from "@/lib/server/logger";
 import { getDb, getPool } from "./client";
+import { LOCKS, withAdvisoryLock } from "./lock";
 import { runMigrations } from "./migrate";
 import { seedDemoData } from "./seed";
 
@@ -28,7 +29,11 @@ export async function prepareDatabase(): Promise<void> {
     logger.warn(SCOPE, "SEED_DEMO_DATA включён, но DEMO_PASSWORD не задан — демо-данные пропущены");
     return;
   }
-  const result = await seedDemoData({ db: getDb(), auth: getAuth(), password: env.DEMO_PASSWORD });
+  const password = env.DEMO_PASSWORD;
+  // Под блокировкой: вторая копия сервера дождётся первой и увидит, что база уже заполнена.
+  const result = await withAdvisoryLock(getPool(), LOCKS.demoSeed, () =>
+    seedDemoData({ db: getDb(), authFor: createAuthFor, password }),
+  );
   logger.info(
     SCOPE,
     result.seeded ? "демо-данные созданы" : "база не пуста — демо-данные пропущены",

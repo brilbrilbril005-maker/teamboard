@@ -1,7 +1,13 @@
 import "server-only";
 import { unstable_rethrow } from "next/navigation";
 import type { z } from "zod";
-import { AppError, INTERNAL_ERROR_MESSAGE, ValidationError, type FieldErrors } from "@/lib/errors";
+import {
+  AppError,
+  INTERNAL_ERROR_MESSAGE,
+  RateLimitedError,
+  ValidationError,
+  type FieldErrors,
+} from "@/lib/errors";
 import { fail, ok, type ActionResult } from "@/lib/result";
 import { logger } from "./logger";
 
@@ -59,6 +65,7 @@ function toFailure(name: string, error: unknown): ActionResult<never> {
       code: error.code,
       message: error.message,
       ...(error.fieldErrors ? { fieldErrors: error.fieldErrors } : {}),
+      ...(error instanceof RateLimitedError ? { retryAfterSeconds: error.retryAfterSeconds } : {}),
     });
   }
   // Подробности — только в журнал сервера; пользователю — общее сообщение.

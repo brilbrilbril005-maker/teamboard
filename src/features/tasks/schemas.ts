@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasNoNulCharacter, INVALID_CHARACTERS_MESSAGE, stripNulCharacters } from "@/lib/text";
 import {
   DEFAULT_TASK_PRIORITY,
   DEFAULT_TASK_STATUS,
@@ -7,7 +8,8 @@ import {
   TASK_SEARCH_MAX_LENGTH,
   TASK_STATUSES,
   TASK_TITLE_MAX_LENGTH,
-  UNASSIGNED_FILTER,
+  UNASSIGNED_PARAM,
+  type AssigneeFilter,
   type TaskFilters,
 } from "./model";
 
@@ -19,11 +21,13 @@ const titleSchema = z
   .string()
   .trim()
   .min(1, "Введите название задачи")
+  .refine(hasNoNulCharacter, INVALID_CHARACTERS_MESSAGE)
   .max(TASK_TITLE_MAX_LENGTH, `Название — не длиннее ${TASK_TITLE_MAX_LENGTH} символов`);
 
 const descriptionSchema = z
   .string()
   .trim()
+  .refine(hasNoNulCharacter, INVALID_CHARACTERS_MESSAGE)
   .max(
     TASK_DESCRIPTION_MAX_LENGTH,
     `Описание — не длиннее ${TASK_DESCRIPTION_MAX_LENGTH} символов`,
@@ -62,6 +66,10 @@ export const updateTaskSchema = z.object({
   changes: taskChangesSchema,
 });
 
+/**
+ * Быстрая смена статуса (перетаскивание карточки, меню «⋯»). Это частный случай
+ * изменения задачи: в сервисе обе схемы приводят к одному методу update.
+ */
 export const changeTaskStatusSchema = z.object({
   id: taskIdSchema,
   status: statusSchema,
@@ -82,6 +90,8 @@ export type DeleteTaskInput = z.input<typeof deleteTaskSchema>;
 /**
  * Фильтры живут в адресной строке:
  *   ?q=отчёт&status=new,in_progress&priority=high&assignee=<id|none>&overdue=1
+ * Несколько значений одного фильтра пишутся через запятую в одном параметре;
+ * если параметр повторён (?status=new&status=done), учитывается первый.
  * Адрес может прийти любой, поэтому разбор «мягкий»: неверные значения
  * молча отбрасываются, страница не падает.
  */
@@ -109,26 +119,29 @@ function parseList<T extends string>(
   return unique.length > 0 ? unique : undefined;
 }
 
-function parseAssignee(value: SearchParamValue): string | undefined {
+function parseAssignee(value: SearchParamValue): AssigneeFilter | undefined {
   const raw = firstValue(value);
-  if (raw === UNASSIGNED_FILTER) {
-    return UNASSIGNED_FILTER;
+  if (raw === UNASSIGNED_PARAM) {
+    return { kind: "unassigned" };
   }
-  return z.uuid().safeParse(raw).success ? raw : undefined;
+  return raw && z.uuid().safeParse(raw).success ? { kind: "member", id: raw } : undefined;
 }
 
 export function parseTaskFilters(params: TaskSearchParams): TaskFilters {
-  const search = firstValue(params.q)?.trim().slice(0, TASK_SEARCH_MAX_LENGTH);
+  const rawSearch = firstValue(params.q);
+  const search = rawSearch
+    ? stripNulCharacters(rawSearch).trim().slice(0, TASK_SEARCH_MAX_LENGTH)
+    : undefined;
   const statuses = parseList(params.status, TASK_STATUSES);
   const priorities = parseList(params.priority, TASK_PRIORITIES);
-  const assigneeId = parseAssignee(params.assignee);
+  const assignee = parseAssignee(params.assignee);
   const overdueOnly = firstValue(params.overdue) === "1";
 
   return {
     ...(search ? { search } : {}),
     ...(statuses ? { statuses } : {}),
     ...(priorities ? { priorities } : {}),
-    ...(assigneeId ? { assigneeId } : {}),
+    ...(assignee ? { assignee } : {}),
     ...(overdueOnly ? { overdueOnly } : {}),
   };
 }

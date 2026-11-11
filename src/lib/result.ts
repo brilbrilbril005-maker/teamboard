@@ -9,6 +9,8 @@ export type ActionError = {
   readonly code: ErrorCode;
   readonly message: string;
   readonly fieldErrors?: FieldErrors;
+  /** Для RATE_LIMITED: через сколько секунд можно повторить. */
+  readonly retryAfterSeconds?: number;
 };
 
 export type ActionResult<T = void> =
