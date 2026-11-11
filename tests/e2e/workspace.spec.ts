@@ -242,30 +242,38 @@ test.describe("поиск и фильтры на телефоне", () => {
   });
 });
 
-test("тёмная тема включается и сохраняется после перезагрузки", async ({ page, isMobile }) => {
-  const user = await registerUser(page);
-  const html = page.locator("html");
-  await expect(html).not.toHaveClass(/\bdark\b/);
+test.describe("тема оформления при тёмной теме в системе", () => {
+  // Светлая тема по умолчанию не должна зависеть от настройки системы.
+  test.use({ colorScheme: "dark" });
 
-  if (isMobile) {
-    await userMenuButton(page, user.name).click();
-    await page.getByRole("menuitemcheckbox", { name: "Тёмная тема" }).click();
-    await page.keyboard.press("Escape");
-  } else {
-    await page.getByRole("button", { name: "Тёмная тема" }).click();
-  }
-  await expect(html).toHaveClass(/\bdark\b/);
-
-  await page.reload();
-  await expect(html).toHaveClass(/\bdark\b/);
-  if (!isMobile) {
-    await expect(page.getByRole("button", { name: "Тёмная тема" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await page.getByRole("button", { name: "Светлая тема" }).click();
+  test("по умолчанию светлая, тёмная включается и сохраняется после перезагрузки", async ({
+    page,
+    isMobile,
+  }) => {
+    const user = await registerUser(page);
+    const html = page.locator("html");
     await expect(html).not.toHaveClass(/\bdark\b/);
-  }
+
+    if (isMobile) {
+      await userMenuButton(page, user.name).click();
+      await page.getByRole("menuitemcheckbox", { name: "Тёмная тема" }).click();
+      await page.keyboard.press("Escape");
+    } else {
+      await page.getByRole("button", { name: "Тёмная тема" }).click();
+    }
+    await expect(html).toHaveClass(/\bdark\b/);
+
+    await page.reload();
+    await expect(html).toHaveClass(/\bdark\b/);
+    if (!isMobile) {
+      await expect(page.getByRole("button", { name: "Тёмная тема" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await page.getByRole("button", { name: "Светлая тема" }).click();
+      await expect(html).not.toHaveClass(/\bdark\b/);
+    }
+  });
 });
 
 test("страницы не прокручиваются по горизонтали", async ({ page }) => {

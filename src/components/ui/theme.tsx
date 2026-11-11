@@ -5,7 +5,7 @@ import { useCallback, useId, useSyncExternalStore } from "react";
 import { cn } from "./cn";
 import { DropdownMenuCheckboxItemBase } from "./dropdown-menu";
 import { Switch, SwitchVisual } from "./switch";
-import { DARK_CLASS_NAME, SYSTEM_DARK_QUERY, THEME_STORAGE_KEY, type Theme } from "./theme-config";
+import { DARK_CLASS_NAME, THEME_STORAGE_KEY, type Theme } from "./theme-config";
 
 const THEME_CHANGE_EVENT = "teamboard:theme-change";
 
@@ -28,32 +28,22 @@ function applyTheme(theme: Theme) {
 }
 
 function subscribe(onChange: () => void) {
-  const media = window.matchMedia(SYSTEM_DARK_QUERY);
-  // Пока тема не выбрана явно — следуем за системой.
-  const followSystem = () => {
-    if (readStoredTheme() === null) {
-      applyTheme(media.matches ? "dark" : "light");
-    }
-  };
-  // Тему поменяли в другой вкладке.
+  // Тему поменяли в другой вкладке. Без явного выбора — светлая.
   const syncFromStorage = (event: StorageEvent) => {
     if (event.key === THEME_STORAGE_KEY) {
-      const stored = readStoredTheme();
-      applyTheme(stored ?? (media.matches ? "dark" : "light"));
+      applyTheme(readStoredTheme() ?? "light");
     }
   };
 
-  media.addEventListener("change", followSystem);
   window.addEventListener("storage", syncFromStorage);
   window.addEventListener(THEME_CHANGE_EVENT, onChange);
   return () => {
-    media.removeEventListener("change", followSystem);
     window.removeEventListener("storage", syncFromStorage);
     window.removeEventListener(THEME_CHANGE_EVENT, onChange);
   };
 }
 
-/** На сервере темы не знаем — считаем светлой; после загрузки значение уточняется. */
+/** На сервере выбор человека неизвестен — светлая тема по умолчанию; после загрузки уточняется. */
 const getServerTheme = (): Theme => "light";
 
 /** Текущая тема и смена темы (выбор запоминается в этом браузере). */
