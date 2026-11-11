@@ -139,16 +139,22 @@ rate_limits: key, count, window_started_at      счётчики попыток 
 PGlite — настоящий PostgreSQL, работающий в памяти процесса: интеграционные тесты не требуют
 ни Docker, ни отдельной базы и применяют те же миграции, что и сервер.
 
-## Что строится следующим этапом
+## Модуль задач
 
-Контракты для задач уже заданы (`features/tasks/model.ts`, `schemas.ts`, `policy.ts`, таблица `tasks`).
-Осталось по образцу `features/auth` и `features/users`:
+| Файл                         | Содержимое                                                                                                                                                           |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tasks/server/repository.ts` | `list(filters, today)` (один запрос с автором и ответственным), `findById`, `create`, `update`, `delete`, счётчики                                                   |
+| `tasks/server/service.ts`    | `listTasks`, `getTaskBoard`, `createTask`, `updateTask` (смена статуса — частный случай), `deleteTask`; права, «не найдено», ограничение частоты изменений (120/мин) |
+| `tasks/server/actions.ts`    | `createTaskAction`, `updateTaskAction`, `changeTaskStatusAction`, `deleteTaskAction` через `authedAction`; после успеха — `refresh()`                                |
+| `tasks/server/queries.ts`    | `getTaskBoard(filters)` → задачи, общее число, счётчики по участникам, «сегодня»                                                                                     |
+| `tasks/components/*`         | Доска (dnd-kit), список, карточка, окна задач, фильтры, мобильная версия; чистая логика вынесена в `*.ts` с тестами                                                  |
+| `components/ui/*`            | Дизайн-система по макетам: кнопки, поля, выбор, меню, окна/шторки, календарь, тосты, аватары                                                                         |
 
-| Файл                         | Содержимое                                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `tasks/server/repository.ts` | `list(filters, today)`, `findById`, `insert`, `update`, `delete`; соединение с `users` для автора и ответственного                  |
-| `tasks/server/service.ts`    | `list`, `create`, `update`, `changeStatus`, `delete` + права (`policy.ts`), `NotFoundError`, проверка, что ответственный существует |
-| `tasks/server/actions.ts`    | `createTaskAction`, `updateTaskAction`, `changeTaskStatusAction`, `deleteTaskAction` через `authedAction`                           |
-| `tasks/server/queries.ts`    | `getTasks(filters)` для страниц                                                                                                     |
-| `tasks/components/*`         | Доска, список, карточка, форма, фильтры (состояние фильтров — в адресной строке, `parseTaskFilters`)                                |
-| `components/ui/*`            | Дизайн-система по макетам                                                                                                           |
+Состояние фильтров и вида живёт в адресной строке (`parseTaskFilters` / `serializeTaskFilters`).
+Изменения — оптимистичные (`useOptimistic`), каждое оборачивается в `useTrackMutation()` для индикатора
+«Все изменения сохранены»; при ошибке — откат и уведомление.
+
+## Развёртывание
+
+`docker-compose.yml` (приложение + PostgreSQL) и `deploy/compose.caddy.yml` (обратный прокси Caddy на 80/443;
+с доменом в `SITE_ADDRESS` — автоматический HTTPS). Порт приложения слушает только `127.0.0.1`.
