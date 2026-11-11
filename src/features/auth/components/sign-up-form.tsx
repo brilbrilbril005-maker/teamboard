@@ -1,48 +1,63 @@
 "use client";
 
+import { AtSign, UserRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PASSWORD_MIN_LENGTH } from "../model";
 import { signUpAction } from "../server/actions";
+import { FormError } from "./form-error";
 import { useAuthForm } from "./use-auth-form";
 
 const FIELDS = ["username", "name", "password"] as const;
+const PRESERVED = ["username", "name"] as const;
 
-/** Временная форма без оформления — визуальная часть делается по макетам отдельно. */
 export function SignUpForm() {
-  const { error, submit, isPending, formRef } = useAuthForm(FIELDS, signUpAction);
+  const { error, values, submit, isPending, formRef } = useAuthForm(FIELDS, signUpAction, {
+    preserve: PRESERVED,
+  });
   const fieldError = (field: (typeof FIELDS)[number]) => error?.fieldErrors?.[field]?.[0];
 
   return (
-    <form ref={formRef} action={submit} className="flex flex-col gap-3" noValidate>
-      <label className="flex flex-col gap-1">
-        Логин
-        <input
+    <form ref={formRef} action={submit} className="flex flex-col gap-5" noValidate>
+      <Field label="Имя" error={fieldError("name")}>
+        <Input
+          name="name"
+          icon={<UserRound />}
+          defaultValue={values.name}
+          autoComplete="name"
+          placeholder="Например, Анна Смирнова"
+        />
+      </Field>
+      <Field label="Логин" error={fieldError("username")}>
+        <Input
           name="username"
+          icon={<AtSign />}
+          defaultValue={values.username}
           autoComplete="username"
           autoCapitalize="none"
-          required
-          className="border p-2"
+          autoCorrect="off"
+          spellCheck={false}
         />
-        {fieldError("username") ? <span role="alert">{fieldError("username")}</span> : null}
-      </label>
-      <label className="flex flex-col gap-1">
-        Имя
-        <input name="name" autoComplete="name" required className="border p-2" />
-        {fieldError("name") ? <span role="alert">{fieldError("name")}</span> : null}
-      </label>
-      <label className="flex flex-col gap-1">
-        Пароль
-        <input
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          className="border p-2"
-        />
-        {fieldError("password") ? <span role="alert">{fieldError("password")}</span> : null}
-      </label>
-      {error && !error.fieldErrors ? <p role="alert">{error.message}</p> : null}
-      <button type="submit" disabled={isPending} className="border p-2">
-        {isPending ? "Создаём аккаунт…" : "Зарегистрироваться"}
-      </button>
+      </Field>
+      <Field
+        label="Пароль"
+        error={fieldError("password")}
+        hint={`Минимум ${PASSWORD_MIN_LENGTH} символов`}
+      >
+        <PasswordInput name="password" autoComplete="new-password" />
+      </Field>
+      {error && !error.fieldErrors ? <FormError message={error.message} /> : null}
+      <Button
+        type="submit"
+        size="lg"
+        loading={isPending}
+        loadingText="Создание аккаунта…"
+        className="mt-1"
+      >
+        Создать аккаунт
+      </Button>
     </form>
   );
 }

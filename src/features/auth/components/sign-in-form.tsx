@@ -1,40 +1,43 @@
 "use client";
 
+import { UserRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { signInAction } from "../server/actions";
+import { FormError } from "./form-error";
 import { useAuthForm } from "./use-auth-form";
 
 const FIELDS = ["username", "password"] as const;
+const PRESERVED = ["username"] as const;
 
-/** Временная форма без оформления — визуальная часть делается по макетам отдельно. */
 export function SignInForm() {
-  const { error, submit, isPending, formRef } = useAuthForm(FIELDS, signInAction);
+  const { error, values, submit, isPending, formRef } = useAuthForm(FIELDS, signInAction, {
+    preserve: PRESERVED,
+  });
+  const fieldError = (field: (typeof FIELDS)[number]) => error?.fieldErrors?.[field]?.[0];
 
   return (
-    <form ref={formRef} action={submit} className="flex flex-col gap-3" noValidate>
-      <label className="flex flex-col gap-1">
-        Логин
-        <input
+    <form ref={formRef} action={submit} className="flex flex-col gap-5" noValidate>
+      <Field label="Логин" error={fieldError("username")}>
+        <Input
           name="username"
+          icon={<UserRound />}
+          defaultValue={values.username}
           autoComplete="username"
           autoCapitalize="none"
-          required
-          className="border p-2"
+          autoCorrect="off"
+          spellCheck={false}
         />
-      </label>
-      <label className="flex flex-col gap-1">
-        Пароль
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          className="border p-2"
-        />
-      </label>
-      {error ? <p role="alert">{error.message}</p> : null}
-      <button type="submit" disabled={isPending} className="border p-2">
-        {isPending ? "Входим…" : "Войти"}
-      </button>
+      </Field>
+      <Field label="Пароль" error={fieldError("password")}>
+        <PasswordInput name="password" autoComplete="current-password" />
+      </Field>
+      {error && !error.fieldErrors ? <FormError message={error.message} /> : null}
+      <Button type="submit" size="lg" loading={isPending} loadingText="Входим…" className="mt-1">
+        Войти
+      </Button>
     </form>
   );
 }

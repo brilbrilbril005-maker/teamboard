@@ -5,10 +5,12 @@ const PASSWORD = "e2e-password-123";
 
 // Next.js держит предыдущие страницы в документе скрытыми (см. CLAUDE.md, «Особенности»),
 // поэтому поля ищем по роли — такой поиск видит только то, что видит пользователь.
-// У поля пароля роли нет, для него явно берём видимое.
+// У поля пароля роли нет, для него явно берём видимое; exact — чтобы не попала
+// кнопка «Показать пароль» рядом с полем.
 const loginField = (page: Page) => page.getByRole("textbox", { name: "Логин" });
 const nameField = (page: Page) => page.getByRole("textbox", { name: "Имя" });
-const passwordField = (page: Page) => page.getByLabel("Пароль").filter({ visible: true });
+const passwordField = (page: Page) =>
+  page.getByLabel("Пароль", { exact: true }).filter({ visible: true });
 
 test.describe("вход и регистрация", () => {
   test("гость попадает на страницу входа", async ({ page }) => {
@@ -44,7 +46,7 @@ test.describe("вход и регистрация", () => {
     await loginField(page).fill(username);
     await nameField(page).fill("Тестовый Пользователь");
     await passwordField(page).fill(PASSWORD);
-    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+    await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText(`@${username}`).first()).toBeVisible();
@@ -77,7 +79,7 @@ test.describe("вход и регистрация", () => {
     await loginField(page).fill("anna");
     await nameField(page).fill("Другая Анна");
     await passwordField(page).fill(PASSWORD);
-    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+    await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
     await expect(page.getByText("Этот логин уже занят")).toBeVisible();
     await expect(page).toHaveURL(/\/register$/);
