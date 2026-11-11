@@ -155,7 +155,7 @@ function BoardColumn({
       ref={setNodeRef}
       aria-labelledby={headingId}
       className={cn(
-        "rounded-card bg-surface-muted/60 dark:bg-surface/40 flex min-w-0 flex-col transition-colors",
+        "rounded-card bg-surface-muted/60 dark:bg-surface/40 flex min-h-[calc(100dvh-17rem)] min-w-0 flex-col transition-colors",
         showDropZone && "bg-primary-soft/40",
       )}
     >

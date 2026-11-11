@@ -13,7 +13,7 @@ const TONES: Readonly<Record<BadgeTone, string>> = {
 };
 
 const SIZES: Readonly<Record<BadgeSize, string>> = {
-  sm: "h-6 gap-1.5 px-2 text-caption [&_svg]:size-3.5",
+  sm: "h-7 gap-1.5 px-2.5 text-sm [&_svg]:size-4",
   md: "h-8 gap-2 px-3 text-sm [&_svg]:size-4",
 };
 
