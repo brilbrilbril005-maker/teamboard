@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
+// Шрифт Inter хранится в пакете и отдаётся самим приложением — без Google Fonts и CDN.
+// Подмножества (кириллица, латиница) грузятся браузером только по мере надобности.
+import "@fontsource-variable/inter/wght.css";
 import "./globals.css";
+import { ThemeScript } from "@/components/ui/theme-script";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: { default: "Teamboard", template: "%s · Teamboard" },
@@ -9,12 +14,23 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1729" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru">
-      <body>{children}</body>
+    // Класс темы ставит ThemeScript до отрисовки — React не должен считать это расхождением.
+    <html lang="ru" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className="min-h-dvh">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
