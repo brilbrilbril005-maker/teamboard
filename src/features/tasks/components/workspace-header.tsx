@@ -1,13 +1,14 @@
 "use client";
 
 import { Search, SlidersHorizontal } from "lucide-react";
+import type { Ref } from "react";
 import { IconButton } from "@/components/ui/icon-button";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme";
 import { SaveStatusIndicator } from "./save-status-indicator";
 import { UserMenu } from "./user-menu";
 
-const PAGE_TITLE = "Задачи команды";
+export const PAGE_TITLE = "Задачи команды";
 
 function Divider() {
   return <span aria-hidden="true" className="bg-border h-7 w-px shrink-0" />;
@@ -35,9 +36,12 @@ export function DesktopHeader() {
 export function MobileHeader({
   onOpenSearch,
   isSearchOpen,
+  searchButtonRef,
 }: {
   readonly onOpenSearch: () => void;
   readonly isSearchOpen: boolean;
+  /** Кнопка «Поиск задач»: на неё возвращается фокус после закрытия поиска. */
+  readonly searchButtonRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <header className="flex items-center gap-3 py-3 md:hidden">
@@ -45,6 +49,7 @@ export function MobileHeader({
       <div className="ml-auto flex items-center gap-3">
         {isSearchOpen ? null : (
           <IconButton
+            ref={searchButtonRef}
             label="Поиск задач"
             icon={<Search />}
             variant="secondary"
@@ -61,15 +66,19 @@ export function MobileHeader({
 export function MobileTitleRow({
   activeFilterCount,
   onOpenFilters,
+  filtersButtonRef,
 }: {
   readonly activeFilterCount: number;
   readonly onOpenFilters: () => void;
+  /** Кнопка «Фильтры»: на неё возвращается фокус после закрытия шторки. */
+  readonly filtersButtonRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 md:hidden">
       <h1 className="text-h2">{PAGE_TITLE}</h1>
       <span className="relative">
         <IconButton
+          ref={filtersButtonRef}
           label={activeFilterCount > 0 ? `Фильтры: включено ${activeFilterCount}` : "Фильтры"}
           icon={<SlidersHorizontal />}
           variant="secondary"

@@ -13,11 +13,20 @@ const CLOSING_ERROR_CODES = new Set(["NOT_FOUND", "FORBIDDEN"]);
 
 export type DeleteTaskDialogProps = {
   readonly task: Pick<Task, "id" | "title">;
+  /** «Отмена», Esc. */
   readonly onClose: () => void;
+  /** Задачи больше нет (удалена или уже не найдена). По умолчанию — onClose. */
+  readonly onDeleted?: () => void;
+  readonly onCloseAutoFocus?: (event: Event) => void;
 };
 
 /** «Удалить задачу?» — подтверждение необратимого удаления. */
-export function DeleteTaskDialog({ task, onClose }: DeleteTaskDialogProps) {
+export function DeleteTaskDialog({
+  task,
+  onClose,
+  onDeleted = onClose,
+  onCloseAutoFocus,
+}: DeleteTaskDialogProps) {
   const [isPending, startTransition] = useTransition();
   const submittingRef = useRef(false);
   const track = useTrackMutation();
@@ -32,12 +41,12 @@ export function DeleteTaskDialog({ task, onClose }: DeleteTaskDialogProps) {
       submittingRef.current = false;
       if (result.ok) {
         toast.success("Задача удалена");
-        onClose();
+        onDeleted();
         return;
       }
       toast.error(result.error.message);
       if (CLOSING_ERROR_CODES.has(result.error.code)) {
-        onClose();
+        onDeleted();
       }
     });
   };
@@ -61,6 +70,7 @@ export function DeleteTaskDialog({ task, onClose }: DeleteTaskDialogProps) {
       pendingLabel="Удаление…"
       pending={isPending}
       onConfirm={handleConfirm}
+      onCloseAutoFocus={onCloseAutoFocus}
     />
   );
 }

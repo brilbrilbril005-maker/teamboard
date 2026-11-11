@@ -36,6 +36,16 @@ describe("signUpSchema", () => {
     expect(signUpSchema.safeParse({ ...valid, password: "1234567" }).success).toBe(false);
   });
 
+  it("asks to fill empty fields the same way as the sign-in form", () => {
+    const result = signUpSchema.safeParse({ username: "  ", name: "", password: "" });
+
+    expect(result.error?.issues.map((issue) => [issue.path[0], issue.message])).toEqual([
+      ["username", "Введите логин"],
+      ["name", "Укажите имя"],
+      ["password", "Введите пароль"],
+    ]);
+  });
+
   it("keeps spaces inside the password untouched", () => {
     expect(signUpSchema.parse({ ...valid, password: " pass word " }).password).toBe(" pass word ");
   });

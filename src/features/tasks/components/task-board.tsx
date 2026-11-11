@@ -21,7 +21,7 @@ import { useId, useLayoutEffect, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import type { IsoDate } from "@/lib/dates";
 import { TASK_STATUSES, TASK_STATUS_LABELS, type Task, type TaskStatus } from "../model";
-import { StatusIcon, taskStatusBackground } from "./badges";
+import { StatusCount, StatusIcon, taskStatusBackground } from "./badges";
 import {
   BOARD_ANNOUNCEMENTS,
   BOARD_SCREEN_READER_INSTRUCTIONS,
@@ -169,9 +169,7 @@ function BoardColumn({
         <h2 id={headingId} className="text-lg font-semibold">
           {TASK_STATUS_LABELS[status]}
         </h2>
-        <span className="text-muted text-lg">
-          ({tasks.length})<span className="sr-only"> задач</span>
-        </span>
+        <StatusCount count={tasks.length} className="text-lg" />
       </header>
       <ul className="flex flex-1 flex-col gap-3 p-3">
         {tasks.map((task) => (
@@ -230,7 +228,7 @@ function DraggableTaskCard({
         {...attributes}
         onKeyDown={pickListener(listeners, "onKeyDown")}
         aria-label={`Переместить задачу «${task.title}» в другую колонку`}
-        className="text-muted hover:text-foreground focus-visible:bg-surface absolute top-4 left-0.5 z-10 flex h-6 w-4 cursor-grab items-center justify-center rounded opacity-0 transition-opacity group-hover/card:opacity-100 focus:opacity-100 pointer-coarse:hidden"
+        className="text-muted hover:text-foreground focus-visible:bg-surface absolute top-4 left-0 z-10 flex h-6 w-4 cursor-grab items-center justify-center rounded opacity-0 transition-opacity group-hover/card:opacity-100 focus:opacity-100 focus-visible:-outline-offset-2 pointer-coarse:hidden"
       >
         <GripVertical aria-hidden="true" className="size-4" />
       </button>

@@ -49,9 +49,12 @@ function FilterGroup({
 export function MobileFiltersSheet({
   open,
   onOpenChange,
+  onCloseAutoFocus,
 }: {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /** Окно открывается не через DialogTrigger, поэтому фокус после закрытия возвращает страница. */
+  readonly onCloseAutoFocus: (event: Event) => void;
 }) {
   const { members } = useTeam();
   const { filters, setFilters, tasks, isNavigating } = useTaskWorkspace();
@@ -59,7 +62,7 @@ export function MobileFiltersSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title="Фильтры" layout="sheet">
+      <DialogContent title="Фильтры" layout="sheet" onCloseAutoFocus={onCloseAutoFocus}>
         <div className="flex flex-col gap-5">
           <FilterGroup title="Статус">
             <div className="flex flex-wrap gap-2">

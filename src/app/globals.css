@@ -27,6 +27,10 @@
   --tb-muted: #6b6f7a;
   --tb-border: #d1d6e0;
   --tb-border-strong: #b5bccb;
+  /* Вторичный текст на цветных плашках статусов: ≥ 5.3:1 на всех трёх оттенках. */
+  --tb-muted-on-tint: #5a5e68;
+  /* Выключенный переключатель: граница элемента управления ≥ 3:1 к фону (WCAG 1.4.11). */
+  --tb-control-off: #8a91a0;
   --tb-overlay: rgb(32 33 36 / 0.45);
 
   --tb-primary: #1d5be8;
@@ -90,10 +94,13 @@
   --tb-muted: #9ba4b7;
   --tb-border: #2d3851;
   --tb-border-strong: #3d4a66;
+  --tb-muted-on-tint: #9ba4b7;
+  --tb-control-off: #6b7690;
   --tb-overlay: rgb(3 7 18 / 0.65);
 
   --tb-primary: #2563eb;
-  --tb-primary-hover: #3b76f6;
+  /* Наведение темнее основного: белый текст сохраняет контраст ≥ 4.5:1. */
+  --tb-primary-hover: #1d4fd8;
   --tb-primary-foreground: #ffffff;
   --tb-primary-soft: #1c2d52;
   --tb-primary-text: #7ea6ff;
@@ -168,6 +175,8 @@
   --color-muted: var(--tb-muted);
   --color-border: var(--tb-border);
   --color-border-strong: var(--tb-border-strong);
+  --color-muted-on-tint: var(--tb-muted-on-tint);
+  --color-control-off: var(--tb-control-off);
   --color-overlay: var(--tb-overlay);
 
   --color-primary: var(--tb-primary);

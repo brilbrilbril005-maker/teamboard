@@ -39,7 +39,7 @@ export async function registerUser(page: Page): Promise<TestUser> {
 }
 
 export function userMenuButton(page: Page, name: string): Locator {
-  return page.getByRole("button", { name: `Меню пользователя ${name}` });
+  return page.getByRole("button", { name: `${name} — меню пользователя` });
 }
 
 export async function signOut(page: Page, name: string): Promise<void> {

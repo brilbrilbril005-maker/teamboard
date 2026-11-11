@@ -266,10 +266,20 @@ test.describe("удаление", () => {
     await createTask(page, { title });
 
     const dialog = await openEditDialog(page, title);
-    await dialog.getByRole("button", { name: "Удалить задачу" }).click();
+    const titleField = dialog.getByRole("textbox", { name: "Название" });
+    await titleField.fill(`${title} (правка)`);
+    const deleteButton = dialog.getByRole("button", { name: "Удалить задачу" });
+    await deleteButton.click();
     const confirm = page.getByRole("alertdialog", { name: "Удалить задачу?" });
     await confirm.getByRole("button", { name: "Отмена" }).click();
     await expect(confirm).toBeHidden();
+
+    // Подтверждение открывалось поверх окна: несохранённая правка на месте, фокус — на кнопке.
+    await expect(dialog).toBeVisible();
+    await expect(titleField).toHaveValue(`${title} (правка)`);
+    await expect(deleteButton).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
 
     await page.reload();
     await expect(await taskCardInStatus(page, isMobile, title, "Новая")).toBeVisible();

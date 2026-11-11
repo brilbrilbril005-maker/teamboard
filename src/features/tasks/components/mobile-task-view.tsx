@@ -99,7 +99,8 @@ export function MobileStatusTabs() {
                 "rounded-control flex h-10 flex-auto shrink-0 cursor-pointer items-center justify-center gap-1 border px-2 text-[0.8125rem] font-medium whitespace-nowrap transition-colors",
                 isSelected
                   ? cn(
-                      "border-transparent",
+                      // Рамка цвета текста и жирный шрифт: выбор виден и у серой вкладки «Новая».
+                      "border-current font-semibold",
                       taskStatusBackground(status),
                       SELECTED_TAB_TEXT[status],
                     )
@@ -116,6 +117,7 @@ export function MobileStatusTabs() {
         })}
       </div>
       <div role="tabpanel" id={panelId} aria-labelledby={tabId(selected)} className="pt-2">
+        <h2 className="sr-only">{TASK_STATUS_LABELS[selected]}</h2>
         {groups[selected].length > 0 ? (
           <MobileCardList tasks={groups[selected]} />
         ) : (
@@ -134,6 +136,7 @@ export function MobileSearch({ onClose }: { readonly onClose: () => void }) {
   const { tasks, filters, search, isNavigating } = useTaskWorkspace();
   const hasQuery = Boolean(filters.search);
   const isTyping = search.draft.trim() !== (filters.search ?? "");
+  const resultsHeadingId = useId();
 
   return (
     <div className="flex flex-col gap-3 pt-1">
@@ -142,6 +145,7 @@ export function MobileSearch({ onClose }: { readonly onClose: () => void }) {
         alwaysShowClear
         clearLabel="Закрыть поиск"
         onClear={onClose}
+        onEscapeWhenEmpty={onClose}
         className="border-primary"
       />
       <p role="status" className="text-muted text-sm">
@@ -151,7 +155,14 @@ export function MobileSearch({ onClose }: { readonly onClose: () => void }) {
             ? foundTasksLabel(tasks.length)
             : "Введите название или описание задачи"}
       </p>
-      {hasQuery ? <MobileCardList tasks={tasks} showStatus /> : null}
+      {hasQuery ? (
+        <section aria-labelledby={resultsHeadingId}>
+          <h2 id={resultsHeadingId} className="sr-only">
+            Результаты поиска
+          </h2>
+          <MobileCardList tasks={tasks} showStatus />
+        </section>
+      ) : null}
       <CreateTaskFab />
     </div>
   );

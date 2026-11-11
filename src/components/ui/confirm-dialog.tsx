@@ -25,6 +25,8 @@ export type ConfirmDialogProps = {
   readonly tone?: "danger" | "primary";
   /** Окно не закрывается само: закройте его через onOpenChange(false), когда действие удалось. */
   readonly onConfirm: () => void;
+  /** Куда вернуть фокус после закрытия, если окно открыто не через Trigger. */
+  readonly onCloseAutoFocus?: (event: Event) => void;
 };
 
 /**
@@ -42,6 +44,7 @@ export function ConfirmDialog({
   pending = false,
   tone = "danger",
   onConfirm,
+  onCloseAutoFocus,
 }: ConfirmDialogProps) {
   const handleOpenChange = (next: boolean) => {
     if (!pending) {
@@ -54,6 +57,7 @@ export function ConfirmDialog({
       <AlertDialogPrimitive.Portal>
         <AlertDialogPrimitive.Overlay className={DIALOG_OVERLAY_CLASS_NAME} />
         <AlertDialogPrimitive.Content
+          onCloseAutoFocus={onCloseAutoFocus}
           className={cn(dialogPanelClassName("responsive"), DIALOG_SIZE_CLASS_NAME.sm)}
         >
           <SheetHandle />

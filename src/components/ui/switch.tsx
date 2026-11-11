@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "./cn";
 
 const TRACK =
-  "inline-flex h-6 w-10 shrink-0 items-center rounded-full bg-border-strong p-0.5 transition-colors";
+  "inline-flex h-6 w-10 shrink-0 items-center rounded-full bg-control-off p-0.5 transition-colors";
 const THUMB = "block size-5 rounded-full bg-white shadow-card transition-transform";
 
 /**

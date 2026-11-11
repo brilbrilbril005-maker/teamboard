@@ -203,6 +203,8 @@ test.describe("поиск и фильтры на телефоне", () => {
     );
     await sheet.getByRole("button", { name: /^Показать \d+ задач/ }).click();
     await expect(sheet).toBeHidden();
+    // Окно открыто не через DialogTrigger — фокус возвращается на кнопку вручную.
+    await expect(page.getByRole("button", { name: /^Фильтры/ })).toBeFocused();
 
     await statusTab(page, "Новая").click();
     await expect(titleButton(page, tasks.alpha)).toBeVisible();
@@ -236,6 +238,7 @@ test.describe("поиск и фильтры на телефоне", () => {
     await page.getByRole("button", { name: "Закрыть поиск" }).click();
     await expect(page).toHaveURL((url) => param("q")(url) === null);
     await expect(page.getByRole("tablist", { name: "Статусы задач" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Поиск задач" })).toBeFocused();
   });
 });
 

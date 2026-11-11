@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useOptimistic, useState } from "react";
+import { useCallback, useEffect, useMemo, useOptimistic, useRef, useState } from "react";
 import { cn } from "@/components/ui/cn";
 import type { TaskBoard as TaskBoardData, TaskFilters } from "../model";
 import { countActiveFilterGroups } from "./filter-summary";
@@ -20,7 +20,7 @@ import { useCloseOnHide } from "./use-close-on-hide";
 import { useSearchDraft } from "./use-search-draft";
 import { useTaskStatusChange } from "./use-task-status-change";
 import { useWorkspaceNavigation } from "./use-workspace-navigation";
-import { DesktopHeader, MobileHeader, MobileTitleRow } from "./workspace-header";
+import { DesktopHeader, MobileHeader, MobileTitleRow, PAGE_TITLE } from "./workspace-header";
 import { WORKSPACE_CONTENT_CLASS_NAME } from "./workspace-layout";
 import { EmptyBoardState, NoResultsState } from "./workspace-states";
 import type { TaskView } from "./workspace-url";
@@ -110,37 +110,64 @@ function MobileWorkspace() {
   useCloseOnHide(setFiltersOpen);
   const emptyState = useEmptyState();
   const showSearch = isSearchOpen || Boolean(filters.search);
+  const filtersButtonRef = useRef<HTMLButtonElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreSearchFocusRef = useRef(false);
+
+  // Кнопка «Поиск задач» появляется снова только после закрытия поиска — тогда и ставим фокус.
+  useEffect(() => {
+    if (!showSearch && restoreSearchFocusRef.current) {
+      restoreSearchFocusRef.current = false;
+      searchButtonRef.current?.focus();
+    }
+  }, [showSearch]);
 
   const closeSearch = () => {
+    restoreSearchFocusRef.current = true;
     search.clear();
     setSearchOpen(false);
   };
 
+  const focusFiltersButton = (event: Event) => {
+    event.preventDefault();
+    filtersButtonRef.current?.focus();
+  };
+
   return (
     <div className="md:hidden">
-      <MobileHeader isSearchOpen={showSearch} onOpenSearch={() => setSearchOpen(true)} />
-      {showSearch ? null : (
-        <MobileTitleRow
-          activeFilterCount={countActiveFilterGroups(filters)}
-          onOpenFilters={() => setFiltersOpen(true)}
-        />
-      )}
-      <main
-        aria-busy={isNavigating}
-        className={cn("transition-opacity", isNavigating && !showSearch && "opacity-60")}
-      >
+      <MobileHeader
+        isSearchOpen={showSearch}
+        onOpenSearch={() => setSearchOpen(true)}
+        searchButtonRef={searchButtonRef}
+      />
+      <main aria-busy={isNavigating}>
         {showSearch ? (
-          <MobileSearch onClose={closeSearch} />
-        ) : emptyState ? (
-          <>
-            {emptyState}
-            <CreateTaskFab />
-          </>
+          <h1 className="sr-only">{PAGE_TITLE}</h1>
         ) : (
-          <MobileStatusTabs />
+          <MobileTitleRow
+            activeFilterCount={countActiveFilterGroups(filters)}
+            onOpenFilters={() => setFiltersOpen(true)}
+            filtersButtonRef={filtersButtonRef}
+          />
         )}
+        <div className={cn("transition-opacity", isNavigating && !showSearch && "opacity-60")}>
+          {showSearch ? (
+            <MobileSearch onClose={closeSearch} />
+          ) : emptyState ? (
+            <>
+              {emptyState}
+              <CreateTaskFab />
+            </>
+          ) : (
+            <MobileStatusTabs />
+          )}
+        </div>
       </main>
-      <MobileFiltersSheet open={isFiltersOpen} onOpenChange={setFiltersOpen} />
+      <MobileFiltersSheet
+        open={isFiltersOpen}
+        onOpenChange={setFiltersOpen}
+        onCloseAutoFocus={focusFiltersButton}
+      />
     </div>
   );
 }

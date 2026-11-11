@@ -14,6 +14,8 @@ type SearchFieldProps = Pick<ComponentProps<"input">, "autoFocus" | "className">
   readonly clearLabel?: string;
   /** Показывать крестик даже при пустом поле (закрыть мобильный поиск). */
   readonly alwaysShowClear?: boolean;
+  /** Esc в пустом поле (на телефоне — закрыть поиск). Непустое поле Esc просто очищает. */
+  readonly onEscapeWhenEmpty?: () => void;
 };
 
 /** «Поиск задач»: ищет по названию и описанию через 300 мс после ввода. */
@@ -24,6 +26,7 @@ export function SearchField({
   onClear,
   clearLabel = "Очистить поиск",
   alwaysShowClear = false,
+  onEscapeWhenEmpty,
 }: SearchFieldProps) {
   const { search } = useTaskWorkspace();
   const handleClear = onClear ?? search.clear;
@@ -41,9 +44,15 @@ export function SearchField({
       value={search.draft}
       onChange={(event) => search.setDraft(event.target.value)}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && search.draft !== "") {
+        if (event.key !== "Escape") {
+          return;
+        }
+        if (search.draft !== "") {
           event.preventDefault();
           search.clear();
+        } else if (onEscapeWhenEmpty) {
+          event.preventDefault();
+          onEscapeWhenEmpty();
         }
       }}
       icon={<Search />}

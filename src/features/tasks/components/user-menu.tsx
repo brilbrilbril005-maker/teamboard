@@ -45,7 +45,8 @@ export function UserMenu({ compact = false }: { readonly compact?: boolean }) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
-        aria-label={`Меню пользователя ${currentUser.name}`}
+        // Имя начинается с видимого текста («Анна…») — так кнопку находит голосовое управление.
+        aria-label={`${currentUser.name} — меню пользователя`}
         className={cn(
           "rounded-control hover:bg-surface-muted flex cursor-pointer items-center gap-2 transition-colors",
           compact ? "rounded-full p-0.5" : "h-11 px-2",

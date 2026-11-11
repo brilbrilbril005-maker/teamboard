@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/toast";
 import { TASK_STATUS_LABELS, type Task, type TaskStatus } from "../model";
 import { changeTaskStatusAction } from "../server/actions";
 import { useTrackMutation } from "./save-status";
+import { runTaskMutation } from "./task-dialog-mutation";
 import type { StatusChange } from "./task-grouping";
 
 export type ChangeTaskStatus = (task: Task, status: TaskStatus) => void;
@@ -24,7 +25,9 @@ function saveStatus(deps: StatusChangeDeps, task: Task, status: TaskStatus, isUn
   }
   // Запрос и индикатор «Сохранение…» запускаем вне перехода: обновления состояния внутри
   // асинхронного перехода React показывает только после его завершения.
-  const saving = deps.track(changeTaskStatusAction({ id: task.id, status }));
+  // runTaskMutation превращает обрыв связи в обычную ошибку: карточка вернётся на место
+  // и появится уведомление, а не необработанное исключение.
+  const saving = runTaskMutation(deps.track, () => changeTaskStatusAction({ id: task.id, status }));
   startTransition(async () => {
     deps.applyOptimistic({ id: task.id, status });
     const result = await saving;

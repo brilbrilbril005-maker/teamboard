@@ -10,10 +10,16 @@ import {
   normalizeUsername,
 } from "./model";
 
+// Пустое поле — «Введите логин», как при входе; правила длины показываем, только когда
+// что-то уже введено. abort — чтобы под пустым полем не копились лишние ошибки.
+const USERNAME_REQUIRED = { message: "Введите логин", abort: true } as const;
+const PASSWORD_REQUIRED = { message: "Введите пароль", abort: true } as const;
+
 /** Правила для нового логина: латиница, цифры и «_», 3–20 символов. */
 export const usernameSchema = z
   .string()
   .trim()
+  .min(1, USERNAME_REQUIRED)
   .min(USERNAME_MIN_LENGTH, `Логин — не короче ${USERNAME_MIN_LENGTH} символов`)
   .max(USERNAME_MAX_LENGTH, `Логин — не длиннее ${USERNAME_MAX_LENGTH} символов`)
   .regex(USERNAME_PATTERN, "Только латинские буквы, цифры и знак «_»")
@@ -21,6 +27,7 @@ export const usernameSchema = z
 
 export const passwordSchema = z
   .string()
+  .min(1, PASSWORD_REQUIRED)
   .min(PASSWORD_MIN_LENGTH, `Пароль — не короче ${PASSWORD_MIN_LENGTH} символов`)
   .max(PASSWORD_MAX_LENGTH, `Пароль — не длиннее ${PASSWORD_MAX_LENGTH} символов`);
 
@@ -45,12 +52,12 @@ export const signInSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(1, "Введите логин")
+    .min(1, USERNAME_REQUIRED)
     .max(USERNAME_MAX_LENGTH, "Неверный логин или пароль")
     .transform(normalizeUsername),
   password: z
     .string()
-    .min(1, "Введите пароль")
+    .min(1, PASSWORD_REQUIRED)
     .max(PASSWORD_MAX_LENGTH, "Неверный логин или пароль"),
 });
 

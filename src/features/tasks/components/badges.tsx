@@ -16,6 +16,7 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "../model";
+import { tasksCountLabel } from "./count-labels";
 
 /**
  * Плашки задачи по макету: статус (иконка + текст), приоритет (точка + текст), дедлайн.
@@ -43,6 +44,25 @@ const STATUS_BACKGROUNDS: Readonly<Record<TaskStatus, string>> = {
 /** Фон заголовка колонки или вкладки статуса (серая / голубая / мятная). */
 export function taskStatusBackground(status: TaskStatus): string {
   return STATUS_BACKGROUNDS[status];
+}
+
+/**
+ * Число задач рядом с названием статуса: видно «(3)», диктор читает «3 задачи».
+ * Цвет — для цветной плашки статуса (обычный text-muted там бледнее 4.5:1).
+ */
+export function StatusCount({
+  count,
+  className,
+}: {
+  readonly count: number;
+  readonly className?: string;
+}) {
+  return (
+    <span className={cn("text-muted-on-tint", className)}>
+      <span aria-hidden="true">({count})</span>
+      <span className="sr-only">{tasksCountLabel(count)}</span>
+    </span>
+  );
 }
 
 /** Иконка статуса в его цвете: в заголовках колонок, вкладках, пунктах выбора. */

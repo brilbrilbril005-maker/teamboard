@@ -70,8 +70,6 @@ export function TaskDialogsProvider({ members, currentUser, children }: TaskDial
   const [dialog, setDialog] = useState<DialogState>(CLOSED);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const keyRef = useRef(0);
-  // Окно редактирования сменилось подтверждением удаления: фокус остаётся в новом окне.
-  const handingOffRef = useRef(false);
 
   const api = useMemo<TaskDialogsApi>(() => {
     const open = (next: (key: number) => DialogState) => {
@@ -94,23 +92,11 @@ export function TaskDialogsProvider({ members, currentUser, children }: TaskDial
   const close = () => setDialog(CLOSED);
 
   const restoreFocus = (event: Event) => {
-    if (handingOffRef.current) {
-      handingOffRef.current = false;
-      event.preventDefault();
-      return;
-    }
     const target = returnFocusRef.current;
     if (target?.isConnected) {
       event.preventDefault();
       target.focus();
     }
-  };
-
-  // Удаление открывается из окна редактирования: подменяем окно, кнопка возврата фокуса та же.
-  const requestDelete = (task: Task) => {
-    handingOffRef.current = true;
-    keyRef.current += 1;
-    setDialog({ kind: "delete", key: keyRef.current, task });
   };
 
   // У подтверждения нет своего обработчика закрытия — возвращаем фокус после его собственного.
@@ -136,7 +122,6 @@ export function TaskDialogsProvider({ members, currentUser, children }: TaskDial
           members={members}
           currentUser={currentUser}
           onClose={close}
-          onRequestDelete={requestDelete}
           onCloseAutoFocus={restoreFocus}
         />
       ) : null}

@@ -44,7 +44,11 @@ export type ButtonProps = ComponentProps<"button"> & {
   readonly size?: ButtonSize;
   /** Иконка слева от текста (lucide-react). Во время загрузки её заменяет спиннер. */
   readonly icon?: ReactNode;
-  /** Идёт действие: кнопка неактивна, показывает спиннер и loadingText. */
+  /**
+   * Идёт действие: показывает спиннер и loadingText, нажатия игнорируются.
+   * Атрибут disabled не ставим — иначе браузер снимет с кнопки фокус и клавиатурный
+   * пользователь потеряет место в форме; вместо него aria-disabled и aria-busy.
+   */
   readonly loading?: boolean;
   /** Текст во время загрузки, например «Создание…». По умолчанию — обычный текст. */
   readonly loadingText?: ReactNode;
@@ -64,15 +68,27 @@ export function Button({
   type = "button",
   className,
   children,
+  onClick,
   ...props
 }: ButtonProps) {
+  const handleClick: ButtonProps["onClick"] = (event) => {
+    if (loading) {
+      // Отменяет и отправку формы (в том числе по Enter в поле).
+      event.preventDefault();
+      return;
+    }
+    onClick?.(event);
+  };
+
   return (
     <button
       type={type}
-      disabled={disabled || loading}
+      disabled={disabled}
+      aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
       className={buttonClassName({ variant, size, className })}
       {...props}
+      onClick={handleClick}
     >
       {loading ? <Spinner /> : icon}
       {loading && loadingText !== undefined ? loadingText : children}

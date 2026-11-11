@@ -5,7 +5,13 @@ import { Select, type SelectOption } from "@/components/ui/select";
 import { MemberAvatar } from "@/features/users/components/member-avatar";
 import type { IsoDate } from "@/lib/dates";
 import { TASK_STATUSES, TASK_STATUS_LABELS, type Task, type TaskStatus } from "../model";
-import { DueDateBadge, PriorityBadge, StatusIcon, taskStatusBackground } from "./badges";
+import {
+  DueDateBadge,
+  PriorityBadge,
+  StatusCount,
+  StatusIcon,
+  taskStatusBackground,
+} from "./badges";
 import { shownOfTotalLabel } from "./count-labels";
 import { HighlightedText } from "./highlighted-text";
 import { TaskCardMenu } from "./task-card-menu";
@@ -91,9 +97,7 @@ function StatusGroup({
           <span className="flex items-center gap-2.5 text-lg font-semibold">
             <StatusIcon status={status} className="size-6" />
             {TASK_STATUS_LABELS[status]}
-            <span className="text-muted font-normal">
-              ({tasks.length})<span className="sr-only"> задач</span>
-            </span>
+            <StatusCount count={tasks.length} className="font-normal" />
           </span>
         </th>
       </tr>

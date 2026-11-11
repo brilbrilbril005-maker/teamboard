@@ -12,6 +12,7 @@ import type { ActionResult } from "@/lib/result";
 import { isTaskOverdue, type Task, type TaskStatus } from "../model";
 import { canDeleteTask } from "../policy";
 import { createTaskAction, updateTaskAction } from "../server/actions";
+import { DeleteTaskDialog } from "./delete-task-dialog";
 import { useTrackMutation } from "./save-status";
 import { runTaskMutation } from "./task-dialog-mutation";
 import { TaskFormFields } from "./task-form-fields";
@@ -80,7 +81,6 @@ export type TaskFormDialogProps = {
   readonly members: readonly TeamMember[];
   readonly currentUser: CurrentUser;
   readonly onClose: () => void;
-  readonly onRequestDelete: (task: Task) => void;
   /** Куда вернуть фокус после закрытия (кнопка, которой окно открыли). */
   readonly onCloseAutoFocus?: (event: Event) => void;
 };
@@ -95,7 +95,6 @@ export function TaskFormDialog({
   members,
   currentUser,
   onClose,
-  onRequestDelete,
   onCloseAutoFocus,
 }: TaskFormDialogProps) {
   const copy = COPY[mode.kind];
@@ -106,6 +105,9 @@ export function TaskFormDialog({
   const formRef = useRef<HTMLFormElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const focusErrorRef = useRef(false);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  // Подтверждение удаления открывается поверх окна: при «Отмена» правки в форме сохраняются.
+  const [isConfirmingDelete, setConfirmingDelete] = useState(false);
   const track = useTrackMutation();
 
   // После неудачной проверки — фокус на первое поле с ошибкой.
@@ -186,6 +188,16 @@ export function TaskFormDialog({
     input?.setSelectionRange(input.value.length, input.value.length);
   };
 
+  // После «Отмена» в подтверждении — обратно на «Удалить задачу». Если окно закрылось
+  // целиком (задача удалена), кнопки уже нет — фокус вернёт внешнее окно.
+  const focusDeleteButton = (event: Event) => {
+    event.preventDefault();
+    const button = deleteButtonRef.current;
+    if (button?.isConnected) {
+      button.focus();
+    }
+  };
+
   const editedTask = mode.kind === "edit" ? mode.task : null;
   const isOverdue = mode.kind === "edit" && isTaskOverdue(values, mode.today);
   const canDelete = editedTask !== null && canDeleteTask(currentUser, editedTask);
@@ -220,10 +232,11 @@ export function TaskFormDialog({
           {editedTask && canDelete ? (
             <div className="mt-3 flex justify-center sm:justify-start">
               <Button
+                ref={deleteButtonRef}
                 variant="danger-ghost"
                 icon={<Trash2 aria-hidden="true" />}
                 disabled={isPending}
-                onClick={() => onRequestDelete(editedTask)}
+                onClick={() => setConfirmingDelete(true)}
                 className="sm:-ml-4"
               >
                 Удалить задачу
@@ -232,6 +245,14 @@ export function TaskFormDialog({
           ) : null}
         </form>
       </DialogContent>
+      {editedTask && isConfirmingDelete ? (
+        <DeleteTaskDialog
+          task={editedTask}
+          onClose={() => setConfirmingDelete(false)}
+          onDeleted={onClose}
+          onCloseAutoFocus={focusDeleteButton}
+        />
+      ) : null}
     </Dialog>
   );
 }
