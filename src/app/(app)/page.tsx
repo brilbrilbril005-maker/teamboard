@@ -1,41 +1,29 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { SignOutButton } from "@/features/auth/components/session-buttons";
-import { requireUser } from "@/features/auth/server/session";
-import { getTeamMembers } from "@/features/users/server/queries";
+import { TaskWorkspace } from "@/features/tasks/components/task-workspace";
+import { WorkspaceSkeleton } from "@/features/tasks/components/workspace-skeleton";
+import { parseTaskView } from "@/features/tasks/components/workspace-url";
+import { parseTaskFilters } from "@/features/tasks/schemas";
+import { getTaskBoard } from "@/features/tasks/server/queries";
+
+export const metadata: Metadata = { title: "Задачи команды" };
 
 /**
- * Временная главная страница: показывает, что вход работает и данные
- * читаются из базы через все слои. Доска задач появится здесь позже.
+ * Данные доски читаются по запросу (не кэшируются): фильтры и вид — из адреса,
+ * «сегодня» — с сервера в часовом поясе команды (board.today).
  */
-async function Workspace() {
-  const user = await requireUser();
-  const teamMembers = await getTeamMembers();
+async function TaskWorkspaceLoader({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  const params = await searchParams;
+  const filters = parseTaskFilters(params);
+  const board = await getTaskBoard(filters);
 
-  return (
-    <>
-      <p>
-        Вы вошли как <strong>{user.name}</strong> (@{user.username})
-      </p>
-      <h2 className="font-semibold">Команда</h2>
-      <ul className="list-disc pl-5">
-        {teamMembers.map((member) => (
-          <li key={member.id}>
-            {member.name} (@{member.username})
-          </li>
-        ))}
-      </ul>
-      <SignOutButton />
-    </>
-  );
+  return <TaskWorkspace board={board} filters={filters} view={parseTaskView(params)} />;
 }
 
-export default function HomePage() {
+export default function TasksPage({ searchParams }: PageProps<"/">) {
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Teamboard</h1>
-      <Suspense fallback={<p>Загрузка…</p>}>
-        <Workspace />
-      </Suspense>
-    </main>
+    <Suspense fallback={<WorkspaceSkeleton />}>
+      <TaskWorkspaceLoader searchParams={searchParams} />
+    </Suspense>
   );
 }
