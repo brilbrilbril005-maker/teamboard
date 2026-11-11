@@ -145,3 +145,33 @@ export function parseTaskFilters(params: TaskSearchParams): TaskFilters {
     ...(overdueOnly ? { overdueOnly } : {}),
   };
 }
+
+/** Параметры адресной строки для фильтров: обратная операция к parseTaskFilters. */
+export type TaskFilterParams = Readonly<Partial<Record<TaskFilterParam, string>>>;
+type TaskFilterParam = "q" | "status" | "priority" | "assignee" | "overdue";
+
+function serializeAssignee(filter: AssigneeFilter): string {
+  return filter.kind === "unassigned" ? UNASSIGNED_PARAM : filter.id;
+}
+
+/**
+ * Записывает фильтры в параметры адреса. Пустые фильтры не пишутся,
+ * поэтому parseTaskFilters(serializeTaskFilters(f)) возвращает те же фильтры.
+ * Результат можно передать в new URLSearchParams(...).
+ */
+export function serializeTaskFilters(filters: TaskFilters): TaskFilterParams {
+  const search = filters.search?.trim();
+  return {
+    ...(search ? { q: search } : {}),
+    ...(filters.statuses?.length ? { status: filters.statuses.join(",") } : {}),
+    ...(filters.priorities?.length ? { priority: filters.priorities.join(",") } : {}),
+    ...(filters.assignee ? { assignee: serializeAssignee(filters.assignee) } : {}),
+    ...(filters.overdueOnly ? { overdue: "1" } : {}),
+  };
+}
+
+/** Строка запроса для ссылки: «?q=…&status=…» или пустая строка, если фильтров нет. */
+export function taskFiltersToQuery(filters: TaskFilters): string {
+  const query = new URLSearchParams(serializeTaskFilters(filters)).toString();
+  return query ? `?${query}` : "";
+}

@@ -4,8 +4,11 @@ import {
   changeTaskStatusSchema,
   createTaskSchema,
   parseTaskFilters,
+  serializeTaskFilters,
+  taskFiltersToQuery,
   updateTaskSchema,
 } from "./schemas";
+import type { TaskFilters } from "./model";
 
 const TASK_ID = "7b0f4f0e-6d5c-4c59-9b0a-3f2f8f1f6a11";
 const USER_ID = "0a9d9d6e-1f0b-4f6e-8d57-2c1c4f7b9e22";
@@ -158,5 +161,73 @@ describe("parseTaskFilters", () => {
 
   it("limits the search length", () => {
     expect(parseTaskFilters({ q: "a".repeat(500) }).search).toHaveLength(100);
+  });
+});
+
+describe("serializeTaskFilters", () => {
+  it("writes nothing for empty filters", () => {
+    expect(serializeTaskFilters({})).toEqual({});
+    expect(taskFiltersToQuery({})).toBe("");
+  });
+
+  it("writes every filter in the address format", () => {
+    expect(
+      serializeTaskFilters({
+        search: "отчёт",
+        statuses: ["new", "in_progress"],
+        priorities: ["high"],
+        assignee: { kind: "member", id: USER_ID },
+        overdueOnly: true,
+      }),
+    ).toEqual({
+      q: "отчёт",
+      status: "new,in_progress",
+      priority: "high",
+      assignee: USER_ID,
+      overdue: "1",
+    });
+  });
+
+  it("writes the «unassigned» filter as none", () => {
+    expect(serializeTaskFilters({ assignee: { kind: "unassigned" } })).toEqual({
+      assignee: "none",
+    });
+  });
+
+  it("skips empty lists, a blank search and a disabled overdue flag", () => {
+    expect(
+      serializeTaskFilters({ search: "  ", statuses: [], priorities: [], overdueOnly: false }),
+    ).toEqual({});
+  });
+
+  it("builds an encoded query string for links", () => {
+    expect(taskFiltersToQuery({ search: "a&b", statuses: ["new", "done"] })).toBe(
+      "?q=a%26b&status=new%2Cdone",
+    );
+  });
+
+  it.each<[string, TaskFilters]>([
+    ["no filters", {}],
+    ["search with special characters", { search: "100% & a_b, ?=#" }],
+    ["statuses", { statuses: ["done", "new"] }],
+    ["priorities", { priorities: ["low", "medium", "high"] }],
+    ["member", { assignee: { kind: "member", id: USER_ID } }],
+    ["unassigned", { assignee: { kind: "unassigned" } }],
+    ["overdue", { overdueOnly: true }],
+    [
+      "everything",
+      {
+        search: "отчёт",
+        statuses: ["in_progress"],
+        priorities: ["high"],
+        assignee: { kind: "unassigned" },
+        overdueOnly: true,
+      },
+    ],
+  ])("round-trips through the address: %s", (_name, filters) => {
+    expect(parseTaskFilters(serializeTaskFilters(filters))).toEqual(filters);
+
+    const query = new URLSearchParams(taskFiltersToQuery(filters));
+    expect(parseTaskFilters(Object.fromEntries(query))).toEqual(filters);
   });
 });

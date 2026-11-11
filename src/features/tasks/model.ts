@@ -31,6 +31,8 @@ export const DEFAULT_TASK_PRIORITY: TaskPriority = "medium";
 export const TASK_TITLE_MAX_LENGTH = 200;
 export const TASK_DESCRIPTION_MAX_LENGTH = 5000;
 export const TASK_SEARCH_MAX_LENGTH = 100;
+/** Потолок задач в одной выдаче доски — защита от неограниченного запроса. */
+export const TASK_LIST_LIMIT = 500;
 
 export type Task = {
   readonly id: string;
@@ -43,6 +45,17 @@ export type Task = {
   readonly creator: TeamMember;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+};
+
+/** Данные страницы задач: отфильтрованные задачи и счётчики для боковой панели. */
+export type TaskBoard = {
+  readonly tasks: readonly Task[];
+  /** Всего задач в команде, без учёта фильтров. */
+  readonly total: number;
+  /** Сколько задач у каждого участника (без учёта фильтров): id участника → число. */
+  readonly countsByAssignee: Readonly<Record<string, number>>;
+  /** «Сегодня» в часовом поясе команды — чтобы сервер и браузер одинаково считали просрочку. */
+  readonly today: IsoDate;
 };
 
 /** Фильтр по ответственному: конкретный участник либо «без ответственного». */
