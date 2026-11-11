@@ -58,7 +58,7 @@ export function TaskCardBody({
         ) : null}
         <h3
           className={cn(
-            "text-body min-w-0 flex-1 font-semibold break-words",
+            "text-body min-w-0 flex-1 font-semibold wrap-anywhere",
             isDone && "text-muted line-through",
           )}
         >

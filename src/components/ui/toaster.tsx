@@ -17,11 +17,18 @@ const TOAST_CLASS_NAMES = {
     "absolute top-1/2 right-2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-surface-muted hover:text-foreground [&_svg]:size-4",
 } as const;
 
+/**
+ * На телефоне внизу экрана — кнопка «+» (56px) и «Сохранено»: уведомление поднимаем над ними,
+ * иначе оно закрывает кнопку создания задачи.
+ */
+const MOBILE_OFFSET = { bottom: "calc(5.25rem + env(safe-area-inset-bottom))" } as const;
+
 /** Контейнер уведомлений. Один на приложение — в корневом layout.tsx. */
 export function Toaster() {
   return (
     <SonnerToaster
       position="bottom-right"
+      mobileOffset={MOBILE_OFFSET}
       containerAriaLabel="Уведомления"
       closeButton
       visibleToasts={3}

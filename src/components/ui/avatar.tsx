@@ -1,5 +1,7 @@
+"use client";
+
 import { nameInitial } from "@/lib/names";
-import { avatarToneIndex } from "./avatar-tone";
+import { useAvatarTone } from "./avatar-tones";
 import { cn } from "./cn";
 
 // Полные имена классов: Tailwind находит их в исходниках только целиком.
@@ -34,12 +36,13 @@ export type AvatarProps = {
  * поэтому сам круг скрыт от диктора.
  */
 export function Avatar({ name, colorKey, size = "sm", className }: AvatarProps) {
+  const tone = useAvatarTone(colorKey);
   return (
     <span
       aria-hidden="true"
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none",
-        TONES[avatarToneIndex(colorKey)],
+        TONES[tone],
         SIZES[size],
         className,
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { AvatarTonesProvider } from "@/components/ui/avatar-tones";
 import type { CurrentUser } from "@/features/auth/model";
 import type { TeamMember } from "../model";
 
@@ -21,7 +22,15 @@ export function TeamProvider({
   children,
 }: TeamContextValue & { readonly children: ReactNode }) {
   const value = useMemo(() => ({ currentUser, members }), [currentUser, members]);
-  return <TeamContext value={value}>{children}</TeamContext>;
+  const memberIds = useMemo(
+    () => [currentUser.id, ...members.map((member) => member.id)],
+    [currentUser.id, members],
+  );
+  return (
+    <TeamContext value={value}>
+      <AvatarTonesProvider keys={memberIds}>{children}</AvatarTonesProvider>
+    </TeamContext>
+  );
 }
 
 export function useTeam(): TeamContextValue {

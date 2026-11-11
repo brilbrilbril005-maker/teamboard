@@ -72,6 +72,8 @@ function initialValues(mode: TaskFormMode): TaskFormValues {
 
 /** Задачу удалили, пока окно было открыто: держать его открытым бессмысленно. */
 const CLOSING_ERROR_CODES = new Set(["NOT_FOUND"]);
+// Сенсорный экран без мыши — телефон или планшет.
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
 
 export type TaskFormDialogProps = {
   readonly mode: TaskFormMode;
@@ -173,6 +175,12 @@ export function TaskFormDialog({
 
   const focusTitle = (event: Event) => {
     event.preventDefault();
+    // На телефоне при редактировании не открываем клавиатуру сразу: она закрыла бы
+    // половину шторки. Фокус — на само окно, чтобы диктор и клавиатура оставались внутри.
+    if (mode.kind === "edit" && window.matchMedia(COARSE_POINTER_QUERY).matches) {
+      (event.currentTarget as HTMLElement | null)?.focus();
+      return;
+    }
     const input = titleRef.current;
     input?.focus();
     input?.setSelectionRange(input.value.length, input.value.length);
@@ -186,6 +194,7 @@ export function TaskFormDialog({
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent
         title={copy.title}
+        size="lg"
         onOpenAutoFocus={focusTitle}
         onCloseAutoFocus={onCloseAutoFocus}
       >

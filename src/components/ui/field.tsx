@@ -16,7 +16,7 @@ export type FieldProps = {
   readonly label: ReactNode;
   /** Текст ошибки под полем. Если задан — поле получает aria-invalid и красную обводку. */
   readonly error?: string | null;
-  /** Подсказка под полем, например «Минимум 8 символов». */
+  /** Подсказка под полем, например «Минимум 8 символов». При ошибке не показывается. */
   readonly hint?: ReactNode;
   readonly required?: boolean;
   /** Свой id поля (по умолчанию создаётся автоматически). */
@@ -46,7 +46,9 @@ export function Field({
   const controlId = id ?? generatedId;
   const errorId = `${controlId}-error`;
   const hintId = `${controlId}-hint`;
-  const describedBy = [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(" ");
+  // Ошибка заменяет подсказку: «Пароль — не короче 8 символов» уже говорит то же, что «Минимум 8 символов».
+  const showHint = Boolean(hint) && !error;
+  const describedBy = [error ? errorId : null, showHint ? hintId : null].filter(Boolean).join(" ");
 
   const context: FieldContextValue = {
     controlId,
@@ -72,7 +74,7 @@ export function Field({
           {error}
         </p>
       ) : null}
-      {hint ? (
+      {showHint ? (
         <p id={hintId} className="text-caption text-muted">
           {hint}
         </p>

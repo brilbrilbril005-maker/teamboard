@@ -16,3 +16,33 @@ export function avatarToneIndex(key: string): number {
   }
   return hash % AVATAR_TONE_COUNT;
 }
+
+/**
+ * Оттенки для всей команды сразу: у каждого свой цвет, пока участников не больше,
+ * чем оттенков. Начинаем с «своего» оттенка по хешу, занятый — берём следующий свободный.
+ * Ключи обходятся в отсортированном порядке, поэтому раскладка не зависит от порядка
+ * списка и одинакова на всех экранах; когда свободные оттенки кончаются, круг начинается заново.
+ */
+export function assignAvatarTones(keys: readonly string[]): ReadonlyMap<string, number> {
+  const uniqueKeys = [...new Set(keys)].sort(); // сортируется свежая копия
+  const assigned = uniqueKeys.reduce<{
+    readonly tones: ReadonlyMap<string, number>;
+    readonly used: ReadonlySet<number>;
+  }>(
+    ({ tones, used }, key) => {
+      const free = used.size >= AVATAR_TONE_COUNT ? new Set<number>() : used;
+      const tone = nextFreeTone(avatarToneIndex(key), free);
+      return { tones: new Map(tones).set(key, tone), used: new Set(free).add(tone) };
+    },
+    { tones: new Map(), used: new Set() },
+  );
+  return assigned.tones;
+}
+
+function nextFreeTone(preferred: number, used: ReadonlySet<number>): number {
+  const candidates = Array.from(
+    { length: AVATAR_TONE_COUNT },
+    (_, step) => (preferred + step) % AVATAR_TONE_COUNT,
+  );
+  return candidates.find((tone) => !used.has(tone)) ?? preferred;
+}
