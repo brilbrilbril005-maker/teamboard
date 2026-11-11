@@ -14,7 +14,13 @@ export function SignUpForm() {
     <form ref={formRef} action={submit} className="flex flex-col gap-3" noValidate>
       <label className="flex flex-col gap-1">
         Логин
-        <input name="username" autoComplete="username" autoCapitalize="none" required className="border p-2" />
+        <input
+          name="username"
+          autoComplete="username"
+          autoCapitalize="none"
+          required
+          className="border p-2"
+        />
         {fieldError("username") ? <span role="alert">{fieldError("username")}</span> : null}
       </label>
       <label className="flex flex-col gap-1">
@@ -24,7 +30,13 @@ export function SignUpForm() {
       </label>
       <label className="flex flex-col gap-1">
         Пароль
-        <input name="password" type="password" autoComplete="new-password" required className="border p-2" />
+        <input
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          className="border p-2"
+        />
         {fieldError("password") ? <span role="alert">{fieldError("password")}</span> : null}
       </label>
       {error && !error.fieldErrors ? <p role="alert">{error.message}</p> : null}

@@ -46,7 +46,10 @@ export const signInSchema = z.object({
     .min(1, "Введите логин")
     .max(USERNAME_MAX_LENGTH, "Неверный логин или пароль")
     .transform(normalizeUsername),
-  password: z.string().min(1, "Введите пароль").max(PASSWORD_MAX_LENGTH, "Неверный логин или пароль"),
+  password: z
+    .string()
+    .min(1, "Введите пароль")
+    .max(PASSWORD_MAX_LENGTH, "Неверный логин или пароль"),
 });
 
 export type SignUpInput = z.input<typeof signUpSchema>;

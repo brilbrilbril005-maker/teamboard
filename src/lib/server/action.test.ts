@@ -92,7 +92,10 @@ describe("createAction", () => {
 
     const result = await action({ title: "a" });
 
-    expect(result).toEqual({ ok: false, error: { code: "INTERNAL", message: INTERNAL_ERROR_MESSAGE } });
+    expect(result).toEqual({
+      ok: false,
+      error: { code: "INTERNAL", message: INTERNAL_ERROR_MESSAGE },
+    });
     expect(logSpy).toHaveBeenCalledWith("action:test.crash", failure);
   });
 

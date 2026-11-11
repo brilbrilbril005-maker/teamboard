@@ -60,10 +60,7 @@ export type TaskFilters = {
 };
 
 /** Просрочена ли задача на указанную дату. Завершённые просроченными не считаются. */
-export function isTaskOverdue(
-  task: Pick<Task, "status" | "dueDate">,
-  today: IsoDate,
-): boolean {
+export function isTaskOverdue(task: Pick<Task, "status" | "dueDate">, today: IsoDate): boolean {
   if (task.dueDate === null || task.status === "done") {
     return false;
   }

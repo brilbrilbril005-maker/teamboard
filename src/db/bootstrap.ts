@@ -29,8 +29,12 @@ export async function prepareDatabase(): Promise<void> {
     return;
   }
   const result = await seedDemoData({ db: getDb(), auth: getAuth(), password: env.DEMO_PASSWORD });
-  logger.info(SCOPE, result.seeded ? "демо-данные созданы" : "база не пуста — демо-данные пропущены", {
-    users: result.users,
-    tasks: result.tasks,
-  });
+  logger.info(
+    SCOPE,
+    result.seeded ? "демо-данные созданы" : "база не пуста — демо-данные пропущены",
+    {
+      users: result.users,
+      tasks: result.tasks,
+    },
+  );
 }

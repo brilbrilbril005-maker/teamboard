@@ -35,7 +35,9 @@ test.describe("вход и регистрация", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("новый пользователь регистрируется, выходит и входит по логину и паролю", async ({ page }) => {
+  test("новый пользователь регистрируется, выходит и входит по логину и паролю", async ({
+    page,
+  }) => {
     const username = uniqueUsername();
 
     await page.goto("/register");

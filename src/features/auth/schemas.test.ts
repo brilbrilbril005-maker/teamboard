@@ -50,6 +50,9 @@ describe("signInSchema", () => {
     const result = signInSchema.safeParse({ username: "", password: "" });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Введите логин", "Введите пароль"]);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      "Введите логин",
+      "Введите пароль",
+    ]);
   });
 });

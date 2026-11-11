@@ -7,7 +7,10 @@ import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-c
  * Пароль хранится только в виде хэша — в таблице accounts.
  */
 
-const id = () => uuid("id").default(sql`pg_catalog.gen_random_uuid()`).primaryKey();
+const id = () =>
+  uuid("id")
+    .default(sql`pg_catalog.gen_random_uuid()`)
+    .primaryKey();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).defaultNow().notNull();
 const updatedAt = () =>
   timestamp("updated_at", { withTimezone: true })

@@ -46,7 +46,10 @@ export function createRateLimiter(db: Database): RateLimiter {
 
       if (row && row.count > rule.limit) {
         const windowEndsAt = row.windowStartedAt.getTime() + windowMs;
-        const retryAfterSeconds = Math.max(1, Math.ceil((windowEndsAt - now.getTime()) / MS_IN_SECOND));
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil((windowEndsAt - now.getTime()) / MS_IN_SECOND),
+        );
         throw new RateLimitedError(retryAfterSeconds);
       }
     },

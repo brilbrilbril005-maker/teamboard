@@ -14,7 +14,9 @@ async function main(): Promise<void> {
   }
   const databaseName = new URL(url).pathname.replace(/^\//, "");
   if (!databaseName.endsWith(E2E_DATABASE_SUFFIX)) {
-    throw new Error(`Отказ: база "${databaseName}" не тестовая (имя должно заканчиваться на ${E2E_DATABASE_SUFFIX})`);
+    throw new Error(
+      `Отказ: база "${databaseName}" не тестовая (имя должно заканчиваться на ${E2E_DATABASE_SUFFIX})`,
+    );
   }
 
   const client = new Client({ connectionString: url });

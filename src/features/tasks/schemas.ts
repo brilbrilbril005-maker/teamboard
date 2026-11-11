@@ -24,7 +24,10 @@ const titleSchema = z
 const descriptionSchema = z
   .string()
   .trim()
-  .max(TASK_DESCRIPTION_MAX_LENGTH, `Описание — не длиннее ${TASK_DESCRIPTION_MAX_LENGTH} символов`);
+  .max(
+    TASK_DESCRIPTION_MAX_LENGTH,
+    `Описание — не длиннее ${TASK_DESCRIPTION_MAX_LENGTH} символов`,
+  );
 
 const statusSchema = z.enum(TASK_STATUSES, "Неизвестный статус");
 const prioritySchema = z.enum(TASK_PRIORITIES, "Неизвестный приоритет");

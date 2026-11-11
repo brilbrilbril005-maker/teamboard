@@ -47,7 +47,10 @@ describe("auth service: sign up", () => {
   });
 
   it("stores the password only as a hash", async () => {
-    await service.signUp({ username: "hashed", name: "Хэш", password: PASSWORD }, createRequestContext("198.51.100.2"));
+    await service.signUp(
+      { username: "hashed", name: "Хэш", password: PASSWORD },
+      createRequestContext("198.51.100.2"),
+    );
 
     const rows = await testDb.db.select({ password: accounts.password }).from(accounts);
 
@@ -59,11 +62,18 @@ describe("auth service: sign up", () => {
   });
 
   it("does not ask for an email and stores an undeliverable internal address", async () => {
-    await service.signUp({ username: "nomail", name: "Без почты", password: PASSWORD }, createRequestContext("198.51.100.3"));
+    await service.signUp(
+      { username: "nomail", name: "Без почты", password: PASSWORD },
+      createRequestContext("198.51.100.3"),
+    );
 
-    const rows = await testDb.db.select({ email: users.email, username: users.username }).from(users);
+    const rows = await testDb.db
+      .select({ email: users.email, username: users.username })
+      .from(users);
 
-    expect(rows.find((row) => row.username === "nomail")?.email).toBe("nomail@users.teamboard.invalid");
+    expect(rows.find((row) => row.username === "nomail")?.email).toBe(
+      "nomail@users.teamboard.invalid",
+    );
   });
 
   it("rejects a login that is already taken", async () => {
@@ -81,7 +91,10 @@ describe("auth service: sign up", () => {
   it("limits the number of registrations from one address", async () => {
     const request = createRequestContext("198.51.100.5");
     for (let index = 0; index < SIGN_UP_RATE_LIMIT.limit; index += 1) {
-      await service.signUp({ username: `bulk_${index}`, name: "Массовый", password: PASSWORD }, request);
+      await service.signUp(
+        { username: `bulk_${index}`, name: "Массовый", password: PASSWORD },
+        request,
+      );
     }
 
     await expect(
@@ -92,11 +105,17 @@ describe("auth service: sign up", () => {
 
 describe("auth service: sign in", () => {
   beforeAll(async () => {
-    await service.signUp({ username: "maxim", name: "Максим Романов", password: PASSWORD }, createRequestContext("198.51.100.6"));
+    await service.signUp(
+      { username: "maxim", name: "Максим Романов", password: PASSWORD },
+      createRequestContext("198.51.100.6"),
+    );
   });
 
   it("signs in with the correct login and password", async () => {
-    const user = await service.signIn({ username: "maxim", password: PASSWORD }, createRequestContext("198.51.100.7"));
+    const user = await service.signIn(
+      { username: "maxim", password: PASSWORD },
+      createRequestContext("198.51.100.7"),
+    );
 
     expect(user).toMatchObject({ username: "maxim", name: "Максим Романов" });
   });
@@ -104,32 +123,46 @@ describe("auth service: sign in", () => {
   it("gives the same answer for a wrong password and an unknown login", async () => {
     const request = createRequestContext("198.51.100.8");
 
-    const wrongPassword = await service.signIn({ username: "maxim", password: "wrong-password" }, request).catch((caught: unknown) => caught);
-    const unknownLogin = await service.signIn({ username: "ghost", password: PASSWORD }, request).catch((caught: unknown) => caught);
+    const wrongPassword = await service
+      .signIn({ username: "maxim", password: "wrong-password" }, request)
+      .catch((caught: unknown) => caught);
+    const unknownLogin = await service
+      .signIn({ username: "ghost", password: PASSWORD }, request)
+      .catch((caught: unknown) => caught);
 
     expect(wrongPassword).toBeInstanceOf(ValidationError);
     expect(unknownLogin).toBeInstanceOf(ValidationError);
     expect((wrongPassword as ValidationError).message).toBe("Неверный логин или пароль");
-    expect((unknownLogin as ValidationError).message).toBe((wrongPassword as ValidationError).message);
+    expect((unknownLogin as ValidationError).message).toBe(
+      (wrongPassword as ValidationError).message,
+    );
   });
 
   it("blocks further attempts after too many failures", async () => {
     const request = createRequestContext("198.51.100.9");
     for (let attempt = 0; attempt < SIGN_IN_RATE_LIMIT.limit; attempt += 1) {
-      await service.signIn({ username: "maxim", password: "wrong-password" }, request).catch(() => undefined);
+      await service
+        .signIn({ username: "maxim", password: "wrong-password" }, request)
+        .catch(() => undefined);
     }
 
-    await expect(service.signIn({ username: "maxim", password: PASSWORD }, request)).rejects.toBeInstanceOf(RateLimitedError);
+    await expect(
+      service.signIn({ username: "maxim", password: PASSWORD }, request),
+    ).rejects.toBeInstanceOf(RateLimitedError);
   });
 
   it("resets the failure counter after a successful sign in", async () => {
     const request = createRequestContext("198.51.100.10");
     for (let attempt = 0; attempt < SIGN_IN_RATE_LIMIT.limit - 1; attempt += 1) {
-      await service.signIn({ username: "maxim", password: "wrong-password" }, request).catch(() => undefined);
+      await service
+        .signIn({ username: "maxim", password: "wrong-password" }, request)
+        .catch(() => undefined);
     }
     await service.signIn({ username: "maxim", password: PASSWORD }, request);
 
-    const afterReset = await service.signIn({ username: "maxim", password: "wrong-password" }, request).catch((caught: unknown) => caught);
+    const afterReset = await service
+      .signIn({ username: "maxim", password: "wrong-password" }, request)
+      .catch((caught: unknown) => caught);
 
     expect(afterReset).toBeInstanceOf(ValidationError);
   });
@@ -137,26 +170,37 @@ describe("auth service: sign in", () => {
 
 describe("auth service: brute force across addresses", () => {
   it("caps attempts per login even when every attempt comes from a new address", async () => {
-    await service.signUp({ username: "target", name: "Цель", password: PASSWORD }, createRequestContext("198.51.100.20"));
+    await service.signUp(
+      { username: "target", name: "Цель", password: PASSWORD },
+      createRequestContext("198.51.100.20"),
+    );
     for (let attempt = 0; attempt < SIGN_IN_PER_USERNAME_RATE_LIMIT.limit; attempt += 1) {
       await service
-        .signIn({ username: "target", password: "wrong-password" }, createRequestContext(`192.0.2.${attempt}`))
+        .signIn(
+          { username: "target", password: "wrong-password" },
+          createRequestContext(`192.0.2.${attempt}`),
+        )
         .catch(() => undefined);
     }
 
     await expect(
-      service.signIn({ username: "target", password: PASSWORD }, createRequestContext("192.0.2.200")),
+      service.signIn(
+        { username: "target", password: PASSWORD },
+        createRequestContext("192.0.2.200"),
+      ),
     ).rejects.toBeInstanceOf(RateLimitedError);
   });
 });
 
 describe("auth service: demo and session", () => {
   beforeAll(async () => {
-    await service.signUp({ username: DEMO_USERNAME, name: "Анна Смирнова", password: DEMO_PASSWORD }, createRequestContext("198.51.100.11"));
+    await service.signUp(
+      { username: DEMO_USERNAME, name: "Анна Смирнова", password: DEMO_PASSWORD },
+      createRequestContext("198.51.100.11"),
+    );
   });
 
   it("signs in the demo user with the server-side password", async () => {
-
     const user = await service.signInAsDemo(createRequestContext("198.51.100.12"));
 
     expect(user.username).toBe(DEMO_USERNAME);
@@ -166,7 +210,10 @@ describe("auth service: demo and session", () => {
   it("keeps demo sign in available while someone hammers the demo login with wrong passwords", async () => {
     for (let attempt = 0; attempt < SIGN_IN_PER_USERNAME_RATE_LIMIT.limit + 1; attempt += 1) {
       await service
-        .signIn({ username: DEMO_USERNAME, password: "wrong-password" }, createRequestContext(`192.0.2.${attempt}`))
+        .signIn(
+          { username: DEMO_USERNAME, password: "wrong-password" },
+          createRequestContext(`192.0.2.${attempt}`),
+        )
         .catch(() => undefined);
     }
 
@@ -179,7 +226,9 @@ describe("auth service: demo and session", () => {
     const withoutDemo = buildService(undefined);
 
     expect(withoutDemo.isDemoEnabled()).toBe(false);
-    await expect(withoutDemo.signInAsDemo(createRequestContext())).rejects.toBeInstanceOf(ValidationError);
+    await expect(withoutDemo.signInAsDemo(createRequestContext())).rejects.toBeInstanceOf(
+      ValidationError,
+    );
   });
 
   it("returns no user for a request without a session", async () => {

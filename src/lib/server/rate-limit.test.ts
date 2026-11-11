@@ -31,7 +31,9 @@ describe("rate limiter", () => {
       await limiter.consume("reject", RULE, START);
     }
 
-    const error = await limiter.consume("reject", RULE, secondsLater(20)).catch((caught: unknown) => caught);
+    const error = await limiter
+      .consume("reject", RULE, secondsLater(20))
+      .catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(RateLimitedError);
     expect((error as RateLimitedError).retryAfterSeconds).toBe(40);

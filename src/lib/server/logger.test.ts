@@ -15,7 +15,12 @@ describe("logger", () => {
 
     logger.info("bootstrap", "миграции применены", { count: 1 });
 
-    expect(lastEntry(spy)).toMatchObject({ level: "info", scope: "bootstrap", message: "миграции применены", count: 1 });
+    expect(lastEntry(spy)).toMatchObject({
+      level: "info",
+      scope: "bootstrap",
+      message: "миграции применены",
+      count: 1,
+    });
   });
 
   it("writes warnings to the warning stream", () => {

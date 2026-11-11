@@ -28,7 +28,8 @@ const ANY_SERVER_CODE = {
 };
 const FRAMEWORK = {
   group: ["next", "next/*", "react", "react-dom", "react-dom/*"],
-  message: "Предметная логика не зависит от Next.js и React — так её можно проверять обычными тестами.",
+  message:
+    "Предметная логика не зависит от Next.js и React — так её можно проверять обычными тестами.",
 };
 const NEXT_RUNTIME = {
   group: ["next", "next/*"],
@@ -45,7 +46,10 @@ const eslintConfig = defineConfig([
       eqeqeq: ["error", "always"],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "inline-type-imports" }],
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {
@@ -62,7 +66,11 @@ const eslintConfig = defineConfig([
   },
   {
     // Интерфейс: страницы и компоненты.
-    files: ["src/app/**/*.{ts,tsx}", "src/features/*/components/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+    files: [
+      "src/app/**/*.{ts,tsx}",
+      "src/features/*/components/**/*.{ts,tsx}",
+      "src/components/**/*.{ts,tsx}",
+    ],
     ignores: ["src/app/api/health/route.ts"],
     rules: { "no-restricted-imports": restrict([DATABASE, SERVER_INTERNALS]) },
   },

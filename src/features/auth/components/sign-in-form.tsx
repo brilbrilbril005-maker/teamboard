@@ -13,11 +13,23 @@ export function SignInForm() {
     <form ref={formRef} action={submit} className="flex flex-col gap-3" noValidate>
       <label className="flex flex-col gap-1">
         Логин
-        <input name="username" autoComplete="username" autoCapitalize="none" required className="border p-2" />
+        <input
+          name="username"
+          autoComplete="username"
+          autoCapitalize="none"
+          required
+          className="border p-2"
+        />
       </label>
       <label className="flex flex-col gap-1">
         Пароль
-        <input name="password" type="password" autoComplete="current-password" required className="border p-2" />
+        <input
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          className="border p-2"
+        />
       </label>
       {error ? <p role="alert">{error.message}</p> : null}
       <button type="submit" disabled={isPending} className="border p-2">

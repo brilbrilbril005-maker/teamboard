@@ -35,15 +35,87 @@ type DemoTask = {
 };
 
 const DEMO_TASKS: readonly DemoTask[] = [
-  { title: "Подготовить презентацию для клиента", description: "Собрать слайды с результатами квартала и планом работ.", status: "new", priority: "high", dueInDays: 2, creator: "anna", assignee: "anna" },
-  { title: "Обновить документацию по API", description: "Описать новые методы и добавить примеры запросов.", status: "new", priority: "medium", dueInDays: 5, creator: "anna", assignee: "maxim" },
-  { title: "Собрать отзывы пользователей", description: "", status: "new", priority: "low", dueInDays: null, creator: "olga", assignee: null },
-  { title: "Исправить баг в фильтрах", description: "Фильтр по ответственному сбрасывается после обновления страницы.", status: "in_progress", priority: "high", dueInDays: -3, creator: "maxim", assignee: "dmitry" },
-  { title: "Дизайн страницы настроек", description: "Макеты для компьютера и телефона.", status: "in_progress", priority: "medium", dueInDays: 1, creator: "anna", assignee: "olga" },
-  { title: "Настроить резервное копирование базы", description: "", status: "in_progress", priority: "medium", dueInDays: 7, creator: "dmitry", assignee: "dmitry" },
-  { title: "Провести планёрку команды", description: "Обсудить приоритеты на следующую неделю.", status: "done", priority: "medium", dueInDays: -1, creator: "anna", assignee: "anna" },
-  { title: "Выбрать библиотеку для графиков", description: "", status: "done", priority: "low", dueInDays: null, creator: "olga", assignee: "maxim" },
-  { title: "Написать тесты для авторизации", description: "Покрыть вход, регистрацию и выход.", status: "done", priority: "high", dueInDays: -5, creator: "maxim", assignee: "maxim" },
+  {
+    title: "Подготовить презентацию для клиента",
+    description: "Собрать слайды с результатами квартала и планом работ.",
+    status: "new",
+    priority: "high",
+    dueInDays: 2,
+    creator: "anna",
+    assignee: "anna",
+  },
+  {
+    title: "Обновить документацию по API",
+    description: "Описать новые методы и добавить примеры запросов.",
+    status: "new",
+    priority: "medium",
+    dueInDays: 5,
+    creator: "anna",
+    assignee: "maxim",
+  },
+  {
+    title: "Собрать отзывы пользователей",
+    description: "",
+    status: "new",
+    priority: "low",
+    dueInDays: null,
+    creator: "olga",
+    assignee: null,
+  },
+  {
+    title: "Исправить баг в фильтрах",
+    description: "Фильтр по ответственному сбрасывается после обновления страницы.",
+    status: "in_progress",
+    priority: "high",
+    dueInDays: -3,
+    creator: "maxim",
+    assignee: "dmitry",
+  },
+  {
+    title: "Дизайн страницы настроек",
+    description: "Макеты для компьютера и телефона.",
+    status: "in_progress",
+    priority: "medium",
+    dueInDays: 1,
+    creator: "anna",
+    assignee: "olga",
+  },
+  {
+    title: "Настроить резервное копирование базы",
+    description: "",
+    status: "in_progress",
+    priority: "medium",
+    dueInDays: 7,
+    creator: "dmitry",
+    assignee: "dmitry",
+  },
+  {
+    title: "Провести планёрку команды",
+    description: "Обсудить приоритеты на следующую неделю.",
+    status: "done",
+    priority: "medium",
+    dueInDays: -1,
+    creator: "anna",
+    assignee: "anna",
+  },
+  {
+    title: "Выбрать библиотеку для графиков",
+    description: "",
+    status: "done",
+    priority: "low",
+    dueInDays: null,
+    creator: "olga",
+    assignee: "maxim",
+  },
+  {
+    title: "Написать тесты для авторизации",
+    description: "Покрыть вход, регистрацию и выход.",
+    status: "done",
+    priority: "high",
+    dueInDays: -5,
+    creator: "maxim",
+    assignee: "maxim",
+  },
 ];
 
 export type SeedOptions = {
@@ -54,14 +126,22 @@ export type SeedOptions = {
   readonly now?: Date;
 };
 
-export type SeedResult = { readonly seeded: boolean; readonly users: number; readonly tasks: number };
+export type SeedResult = {
+  readonly seeded: boolean;
+  readonly users: number;
+  readonly tasks: number;
+};
 
 /**
  * Пользователи создаются через обычную регистрацию библиотеки авторизации —
  * так пароль хэшируется тем же способом, что и у настоящих аккаунтов.
  * Сессии, которые регистрация открывает попутно, сразу удаляются.
  */
-async function createDemoUsers(db: Database, auth: Auth, password: string): Promise<Map<DemoUsername, string>> {
+async function createDemoUsers(
+  db: Database,
+  auth: Auth,
+  password: string,
+): Promise<Map<DemoUsername, string>> {
   const idsByUsername = new Map<DemoUsername, string>();
 
   for (const demoUser of DEMO_USERS) {
@@ -89,7 +169,12 @@ function requireId(ids: Map<DemoUsername, string>, username: DemoUsername): stri
 }
 
 /** Заполняет базу демо-данными. Если в базе уже есть пользователи — ничего не делает. */
-export async function seedDemoData({ db, auth, password, now = new Date() }: SeedOptions): Promise<SeedResult> {
+export async function seedDemoData({
+  db,
+  auth,
+  password,
+  now = new Date(),
+}: SeedOptions): Promise<SeedResult> {
   const [existing] = await db.select({ value: count() }).from(users);
   if ((existing?.value ?? 0) > 0) {
     return { seeded: false, users: 0, tasks: 0 };
@@ -101,7 +186,10 @@ export async function seedDemoData({ db, auth, password, now = new Date() }: See
     description: task.description,
     status: task.status,
     priority: task.priority,
-    dueDate: task.dueInDays === null ? null : toIsoDate(new Date(now.getTime() + task.dueInDays * MS_IN_DAY)),
+    dueDate:
+      task.dueInDays === null
+        ? null
+        : toIsoDate(new Date(now.getTime() + task.dueInDays * MS_IN_DAY)),
     creatorId: requireId(ids, task.creator),
     assigneeId: task.assignee === null ? null : requireId(ids, task.assignee),
   }));

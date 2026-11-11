@@ -30,7 +30,10 @@ afterAll(async () => {
 
 describe("database rules for tasks", () => {
   it("applies defaults for a task created with a title only", async () => {
-    const [task] = await testDb.db.insert(tasks).values({ title: "Задача", creatorId: authorId }).returning();
+    const [task] = await testDb.db
+      .insert(tasks)
+      .values({ title: "Задача", creatorId: authorId })
+      .returning();
 
     expect(task).toMatchObject({
       description: "",
@@ -51,12 +54,16 @@ describe("database rules for tasks", () => {
   });
 
   it("rejects a blank title even if the application is bypassed", async () => {
-    await expect(testDb.db.insert(tasks).values({ title: "   ", creatorId: authorId })).rejects.toThrow();
+    await expect(
+      testDb.db.insert(tasks).values({ title: "   ", creatorId: authorId }),
+    ).rejects.toThrow();
   });
 
   it("rejects a task without an existing author", async () => {
     await expect(
-      testDb.db.insert(tasks).values({ title: "Чужая", creatorId: "00000000-0000-4000-8000-000000000000" }),
+      testDb.db
+        .insert(tasks)
+        .values({ title: "Чужая", creatorId: "00000000-0000-4000-8000-000000000000" }),
     ).rejects.toThrow();
   });
 
@@ -68,7 +75,10 @@ describe("database rules for tasks", () => {
 
     await testDb.db.delete(users).where(eq(users.id, assigneeId));
 
-    const [reloaded] = await testDb.db.select().from(tasks).where(eq(tasks.id, task?.id ?? ""));
+    const [reloaded] = await testDb.db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, task?.id ?? ""));
     expect(reloaded?.assigneeId).toBeNull();
   });
 

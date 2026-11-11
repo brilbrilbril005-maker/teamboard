@@ -11,9 +11,7 @@ const booleanFlag = (defaultValue: boolean) =>
   z
     .enum(["true", "false", "1", "0"])
     .optional()
-    .transform((value) =>
-      value === undefined ? defaultValue : value === "true" || value === "1",
-    );
+    .transform((value) => (value === undefined ? defaultValue : value === "true" || value === "1"));
 
 const MIN_SECRET_LENGTH = 32;
 const MIN_DEMO_PASSWORD_LENGTH = 8;
@@ -37,7 +35,10 @@ const envSchema = z.object({
   /** Пароль демо-аккаунтов. Если не задан, вход «как демо» отключён. */
   DEMO_PASSWORD: z
     .string()
-    .min(MIN_DEMO_PASSWORD_LENGTH, `DEMO_PASSWORD должен быть не короче ${MIN_DEMO_PASSWORD_LENGTH} символов`)
+    .min(
+      MIN_DEMO_PASSWORD_LENGTH,
+      `DEMO_PASSWORD должен быть не короче ${MIN_DEMO_PASSWORD_LENGTH} символов`,
+    )
     .optional(),
 });
 

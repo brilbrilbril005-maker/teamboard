@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { TASK_TITLE_MAX_LENGTH } from "./model";
-import { changeTaskStatusSchema, createTaskSchema, parseTaskFilters, updateTaskSchema } from "./schemas";
+import {
+  changeTaskStatusSchema,
+  createTaskSchema,
+  parseTaskFilters,
+  updateTaskSchema,
+} from "./schemas";
 
 const TASK_ID = "7b0f4f0e-6d5c-4c59-9b0a-3f2f8f1f6a11";
 const USER_ID = "0a9d9d6e-1f0b-4f6e-8d57-2c1c4f7b9e22";
@@ -22,12 +27,17 @@ describe("createTaskSchema", () => {
   });
 
   it("rejects a title over the limit", () => {
-    expect(createTaskSchema.safeParse({ title: "a".repeat(TASK_TITLE_MAX_LENGTH + 1) }).success).toBe(false);
+    expect(
+      createTaskSchema.safeParse({ title: "a".repeat(TASK_TITLE_MAX_LENGTH + 1) }).success,
+    ).toBe(false);
   });
 
-  it.each(["11.11.2026", "2026-13-01", "2026-02-30", "завтра"])("rejects the malformed date %s", (dueDate) => {
-    expect(createTaskSchema.safeParse({ title: "a", dueDate }).success).toBe(false);
-  });
+  it.each(["11.11.2026", "2026-13-01", "2026-02-30", "завтра"])(
+    "rejects the malformed date %s",
+    (dueDate) => {
+      expect(createTaskSchema.safeParse({ title: "a", dueDate }).success).toBe(false);
+    },
+  );
 
   it("rejects unknown status and priority values", () => {
     expect(createTaskSchema.safeParse({ title: "a", status: "archived" }).success).toBe(false);
@@ -47,7 +57,10 @@ describe("updateTaskSchema", () => {
   });
 
   it("allows clearing the assignee and the due date", () => {
-    const parsed = updateTaskSchema.parse({ id: TASK_ID, changes: { assigneeId: null, dueDate: null } });
+    const parsed = updateTaskSchema.parse({
+      id: TASK_ID,
+      changes: { assigneeId: null, dueDate: null },
+    });
 
     expect(parsed.changes).toEqual({ assigneeId: null, dueDate: null });
   });
@@ -72,7 +85,10 @@ describe("updateTaskSchema", () => {
 
 describe("changeTaskStatusSchema", () => {
   it("accepts a known status", () => {
-    expect(changeTaskStatusSchema.parse({ id: TASK_ID, status: "done" })).toEqual({ id: TASK_ID, status: "done" });
+    expect(changeTaskStatusSchema.parse({ id: TASK_ID, status: "done" })).toEqual({
+      id: TASK_ID,
+      status: "done",
+    });
   });
 
   it("rejects an unknown status", () => {
@@ -109,7 +125,12 @@ describe("parseTaskFilters", () => {
 
   it("silently drops unknown and malformed values", () => {
     expect(
-      parseTaskFilters({ status: "new,archived,new", priority: "urgent", assignee: "'; drop table tasks", overdue: "yes" }),
+      parseTaskFilters({
+        status: "new,archived,new",
+        priority: "urgent",
+        assignee: "'; drop table tasks",
+        overdue: "yes",
+      }),
     ).toEqual({ statuses: ["new"] });
   });
 

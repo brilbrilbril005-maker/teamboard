@@ -15,9 +15,6 @@ export function canEditTask(user: Pick<CurrentUser, "id"> | null): boolean {
 }
 
 /** Удалить задачу может только её автор. */
-export function canDeleteTask(
-  user: Pick<CurrentUser, "id"> | null,
-  task: TaskOwnership,
-): boolean {
+export function canDeleteTask(user: Pick<CurrentUser, "id"> | null, task: TaskOwnership): boolean {
   return user !== null && user.id === task.creator.id;
 }

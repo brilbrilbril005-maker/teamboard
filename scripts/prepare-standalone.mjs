@@ -19,7 +19,9 @@ async function exists(target) {
 }
 
 if (await exists(standalone)) {
-  await cp(path.join(root, ".next", "static"), path.join(standalone, ".next", "static"), { recursive: true });
+  await cp(path.join(root, ".next", "static"), path.join(standalone, ".next", "static"), {
+    recursive: true,
+  });
   if (await exists(path.join(root, "public"))) {
     await cp(path.join(root, "public"), path.join(standalone, "public"), { recursive: true });
   }

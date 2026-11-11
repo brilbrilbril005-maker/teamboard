@@ -24,7 +24,10 @@ export type ServerAction<Schema extends z.ZodType, Result> = (
 ) => Promise<ActionResult<Result>>;
 
 /** Раскладывает ошибки схемы по полям: «changes.title» → ["Введите название"]. */
-export function toFieldErrors(error: z.ZodError): { formErrors: string[]; fieldErrors: FieldErrors } {
+export function toFieldErrors(error: z.ZodError): {
+  formErrors: string[];
+  fieldErrors: FieldErrors;
+} {
   const formErrors: string[] = [];
   const fieldErrors: Record<string, string[]> = {};
   for (const issue of error.issues) {
@@ -38,7 +41,10 @@ export function toFieldErrors(error: z.ZodError): { formErrors: string[]; fieldE
   return { formErrors, fieldErrors };
 }
 
-export function parseInput<Schema extends z.ZodType>(schema: Schema, input: unknown): z.output<Schema> {
+export function parseInput<Schema extends z.ZodType>(
+  schema: Schema,
+  input: unknown,
+): z.output<Schema> {
   const parsed = schema.safeParse(input);
   if (parsed.success) {
     return parsed.data;

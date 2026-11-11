@@ -23,7 +23,12 @@ afterAll(async () => {
 
 describe("seedDemoData", () => {
   it("creates demo users and tasks in an empty database", async () => {
-    const result = await seedDemoData({ db: testDb.db, auth: createTestAuth(testDb.db), password: PASSWORD, now: NOW });
+    const result = await seedDemoData({
+      db: testDb.db,
+      auth: createTestAuth(testDb.db),
+      password: PASSWORD,
+      now: NOW,
+    });
 
     expect(result).toEqual({ seeded: true, users: 4, tasks: 9 });
   });
@@ -55,7 +60,12 @@ describe("seedDemoData", () => {
   });
 
   it("does nothing when the database already has users", async () => {
-    const result = await seedDemoData({ db: testDb.db, auth: createTestAuth(testDb.db), password: PASSWORD, now: NOW });
+    const result = await seedDemoData({
+      db: testDb.db,
+      auth: createTestAuth(testDb.db),
+      password: PASSWORD,
+      now: NOW,
+    });
     const [row] = await testDb.db.select({ value: count() }).from(users);
 
     expect(result.seeded).toBe(false);

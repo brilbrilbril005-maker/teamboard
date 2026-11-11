@@ -10,15 +10,24 @@ import type { Auth } from "./auth";
 const TEN_MINUTES_IN_SECONDS = 10 * 60;
 
 /** Не больше 10 попыток входа за 10 минут для пары «адрес + логин». */
-export const SIGN_IN_RATE_LIMIT: RateLimitRule = { limit: 10, windowSeconds: TEN_MINUTES_IN_SECONDS };
+export const SIGN_IN_RATE_LIMIT: RateLimitRule = {
+  limit: 10,
+  windowSeconds: TEN_MINUTES_IN_SECONDS,
+};
 /**
  * Общий потолок попыток на один логин с любых адресов. Адрес клиента берётся
  * из заголовка прокси и может быть подделан, поэтому подбор пароля
  * ограничен ещё и независимо от адреса.
  */
-export const SIGN_IN_PER_USERNAME_RATE_LIMIT: RateLimitRule = { limit: 30, windowSeconds: TEN_MINUTES_IN_SECONDS };
+export const SIGN_IN_PER_USERNAME_RATE_LIMIT: RateLimitRule = {
+  limit: 30,
+  windowSeconds: TEN_MINUTES_IN_SECONDS,
+};
 /** Не больше 20 демо-входов за 10 минут с одного адреса. */
-export const DEMO_SIGN_IN_RATE_LIMIT: RateLimitRule = { limit: 20, windowSeconds: TEN_MINUTES_IN_SECONDS };
+export const DEMO_SIGN_IN_RATE_LIMIT: RateLimitRule = {
+  limit: 20,
+  windowSeconds: TEN_MINUTES_IN_SECONDS,
+};
 /** Не больше 5 регистраций в час с одного адреса. */
 export const SIGN_UP_RATE_LIMIT: RateLimitRule = { limit: 5, windowSeconds: 60 * 60 };
 
@@ -82,7 +91,10 @@ export type AuthServiceDeps = {
 
 export function createAuthService({ auth, rateLimiter, demoPassword }: AuthServiceDeps) {
   /** Проверка логина и пароля без ограничителя попыток. */
-  async function authenticate(credentials: SignInData, request: RequestContext): Promise<CurrentUser> {
+  async function authenticate(
+    credentials: SignInData,
+    request: RequestContext,
+  ): Promise<CurrentUser> {
     try {
       const result = await auth.api.signInUsername({
         body: { username: credentials.username, password: credentials.password },
@@ -99,7 +111,10 @@ export function createAuthService({ auth, rateLimiter, demoPassword }: AuthServi
 
   async function signIn(credentials: SignInData, request: RequestContext): Promise<CurrentUser> {
     const perClientKey = `sign-in:${request.clientIp}:${credentials.username}`;
-    await rateLimiter.consume(`sign-in:any:${credentials.username}`, SIGN_IN_PER_USERNAME_RATE_LIMIT);
+    await rateLimiter.consume(
+      `sign-in:any:${credentials.username}`,
+      SIGN_IN_PER_USERNAME_RATE_LIMIT,
+    );
     await rateLimiter.consume(perClientKey, SIGN_IN_RATE_LIMIT);
 
     const user = await authenticate(credentials, request);

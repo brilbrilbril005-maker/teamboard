@@ -15,8 +15,19 @@ function serializeError(error: unknown): Record<string, unknown> {
   return { message: String(error) };
 }
 
-function write(level: "info" | "warn" | "error", scope: string, message: string, context?: LogContext) {
-  const entry = JSON.stringify({ time: new Date().toISOString(), level, scope, message, ...context });
+function write(
+  level: "info" | "warn" | "error",
+  scope: string,
+  message: string,
+  context?: LogContext,
+) {
+  const entry = JSON.stringify({
+    time: new Date().toISOString(),
+    level,
+    scope,
+    message,
+    ...context,
+  });
   if (level === "error") {
     console.error(entry);
   } else if (level === "warn") {

@@ -12,8 +12,7 @@ export type ActionError = {
 };
 
 export type ActionResult<T = void> =
-  | { readonly ok: true; readonly data: T }
-  | { readonly ok: false; readonly error: ActionError };
+  { readonly ok: true; readonly data: T } | { readonly ok: false; readonly error: ActionError };
 
 export function ok<T>(data: T): ActionResult<T> {
   return { ok: true, data };

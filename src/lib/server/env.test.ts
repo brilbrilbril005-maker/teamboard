@@ -36,7 +36,9 @@ describe("parseEnv", () => {
   });
 
   it("rejects a database url with a wrong protocol", () => {
-    expect(() => parseEnv({ ...validEnv, DATABASE_URL: "mysql://localhost/db" })).toThrow(/DATABASE_URL/);
+    expect(() => parseEnv({ ...validEnv, DATABASE_URL: "mysql://localhost/db" })).toThrow(
+      /DATABASE_URL/,
+    );
   });
 
   it("lists every missing variable in one error", () => {
