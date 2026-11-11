@@ -20,13 +20,13 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   /** Строка подключения к PostgreSQL. */
   DATABASE_URL: z
-    .string()
+    .string("DATABASE_URL не задан")
     .regex(/^postgres(ql)?:\/\//, "DATABASE_URL должен начинаться с postgres://"),
   /** Публичный адрес приложения, например https://teamboard.example.ru */
   APP_URL: z.url("APP_URL должен быть полным адресом, например https://example.ru"),
   /** Секрет для подписи сессий. Сгенерировать: openssl rand -base64 32 */
   AUTH_SECRET: z
-    .string()
+    .string("AUTH_SECRET не задан")
     .min(MIN_SECRET_LENGTH, `AUTH_SECRET должен быть не короче ${MIN_SECRET_LENGTH} символов`),
   /** Применять миграции базы при старте сервера. */
   RUN_MIGRATIONS: booleanFlag(true),
