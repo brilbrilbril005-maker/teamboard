@@ -1,0 +1,38 @@
+# Полный запуск одной командой: приложение + PostgreSQL.
+#   cp .env.example .env   # заполнить AUTH_SECRET, POSTGRES_PASSWORD, APP_URL
+#   docker compose up -d --build
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: teamboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в файле .env}
+      POSTGRES_DB: teamboard
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamboard -d teamboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Порт базы наружу не публикуется: к ней обращается только приложение.
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://teamboard:${POSTGRES_PASSWORD}@db:5432/teamboard
+      APP_URL: ${APP_URL:?Задайте APP_URL в файле .env}
+      AUTH_SECRET: ${AUTH_SECRET:?Задайте AUTH_SECRET в файле .env}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+
+volumes:
+  db-data:
