@@ -1,0 +1,23 @@
+# Добавляет к docker-compose.yml обратный прокси Caddy (порты 80/443).
+#   docker compose -f docker-compose.yml -f deploy/compose.caddy.yml up -d --build
+# В .env: SITE_ADDRESS=teamboard.example.ru (HTTPS) или SITE_ADDRESS=:80 (по IP, без HTTPS).
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

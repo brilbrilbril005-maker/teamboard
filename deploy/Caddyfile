@@ -1,0 +1,7 @@
+# Обратный прокси перед приложением.
+# SITE_ADDRESS — домен (тогда Caddy сам выпустит HTTPS-сертификат Let's Encrypt)
+# или ":80", если сайт работает по IP без домена.
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
