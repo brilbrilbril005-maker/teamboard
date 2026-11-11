@@ -10,20 +10,25 @@ import nextTs from "eslint-config-next/typescript";
 
 const restrict = (patterns) => ["error", { patterns }];
 
-const DATABASE = {
-  group: ["drizzle-orm", "drizzle-orm/*", "pg", "@electric-sql/*", "@/db/*", "@/db/**"],
-  message: "К базе обращаются только репозитории (features/*/server/repository.ts) и папка src/db.",
-};
-// Папка server/ модуля: по сокращению "@/features/<модуль>/server" или по относительному пути.
+// Папка server/ любого модуля: по сокращению "@/features/<модуль>/server" или по относительному пути.
 const FEATURE_SERVER = "^(@/features/[^/]+|\\.{1,2}(/[^/]+)*)/server";
 
-const SERVER_INTERNALS = {
-  regex: `${FEATURE_SERVER}(/(index|repository|service|auth))?$|^@/lib/server/`,
+const DATABASE_MESSAGE =
+  "К базе обращаются только репозитории (features/*/server/repository.ts) и папка src/db.";
+const DATABASE = [
+  { group: ["drizzle-orm", "drizzle-orm/*", "pg", "@electric-sql/*"], message: DATABASE_MESSAGE },
+  // Папка src/db — по сокращению и по любому относительному пути.
+  { regex: "^@/db(/|$)|^(\\.{1,2}/)+(.*/)?db(/|$)", message: DATABASE_MESSAGE },
+];
+
+// Интерфейсу из серверного кода доступны ровно три входа; всё остальное закрыто.
+const UI_SERVER_ACCESS = {
+  regex: `${FEATURE_SERVER}(?!/(actions|queries|session)$)(/.*)?$|^@/lib/server(/|$)`,
   message:
     "Интерфейс работает с сервером только через actions.ts (изменения), queries.ts (чтение) и session.ts.",
 };
 const ANY_SERVER_CODE = {
-  regex: `${FEATURE_SERVER}(/.*)?$|^@/lib/server/|^server-only$`,
+  regex: `${FEATURE_SERVER}(/.*)?$|^@/lib/server(/|$)|^server-only$`,
   message: "Этот файл общий для сервера и браузера — серверный код сюда импортировать нельзя.",
 };
 const FRAMEWORK = {
@@ -32,8 +37,25 @@ const FRAMEWORK = {
     "Предметная логика не зависит от Next.js и React — так её можно проверять обычными тестами.",
 };
 const NEXT_RUNTIME = {
-  group: ["next", "next/*"],
-  message: "Сервисы и репозитории не знают про Next.js: запрос и cookie им передают явно.",
+  group: ["next", "next/*", "react", "react-dom", "react-dom/*"],
+  message: "Сервисы и репозитории не знают про Next.js и React: запрос и cookie им передают явно.",
+};
+// Зависимости идут только вниз: действия → сервис → репозиторий.
+const ABOVE_SERVICE = {
+  regex:
+    "/server/(actions|queries|session|authed-action)$|^\\./(actions|queries|session|authed-action)$",
+  message:
+    "Сервис не зависит от слоя выше (действия, чтение, сессия): пользователя ему передают аргументом.",
+};
+const ABOVE_REPOSITORY = {
+  regex:
+    "/server/(service|actions|queries|session|authed-action|index)$|^\\./(service|actions|queries|session|authed-action|index)$",
+  message: "Репозиторий — нижний слой: он не зависит от сервисов и действий.",
+};
+const REPOSITORY_DIRECTLY = {
+  regex: "/server/repository$|^\\./repository$",
+  message:
+    "Действия и чтение получают сервис или репозиторий из server/index.ts, а не создают их сами.",
 };
 
 const eslintConfig = defineConfig([
@@ -59,35 +81,54 @@ const eslintConfig = defineConfig([
   },
 
   // --- Границы слоёв -------------------------------------------------------
+  // Блоки идут от общего к частному: для файла действует последний подходящий.
   {
-    // Чистая предметная часть: модели, проверки ввода, правила доступа, общие утилиты.
-    files: ["src/features/*/{model,schemas,policy}.ts", "src/lib/*.ts"],
-    rules: { "no-restricted-imports": restrict([DATABASE, ANY_SERVER_CODE, FRAMEWORK]) },
+    // По умолчанию весь код приложения отрезан от базы.
+    files: ["src/**/*.{ts,tsx}"],
+    rules: { "no-restricted-imports": restrict([...DATABASE]) },
   },
   {
-    // Интерфейс: страницы и компоненты.
+    // Чистая предметная часть: файлы верхнего уровня модуля (model, schemas, policy, …) и src/lib.
+    files: ["src/features/*/*.ts", "src/lib/*.ts"],
+    rules: { "no-restricted-imports": restrict([...DATABASE, ANY_SERVER_CODE, FRAMEWORK]) },
+  },
+  {
+    // Интерфейс: страницы, компоненты, хуки.
     files: [
       "src/app/**/*.{ts,tsx}",
-      "src/features/*/components/**/*.{ts,tsx}",
       "src/components/**/*.{ts,tsx}",
+      "src/hooks/**/*.{ts,tsx}",
+      "src/features/*/components/**/*.{ts,tsx}",
+      "src/features/*/hooks/**/*.{ts,tsx}",
     ],
-    ignores: ["src/app/api/health/route.ts"],
-    rules: { "no-restricted-imports": restrict([DATABASE, SERVER_INTERNALS]) },
+    rules: { "no-restricted-imports": restrict([...DATABASE, UI_SERVER_ACCESS]) },
   },
   {
-    // Сервисы: правила и сценарии. Без базы и без Next.js.
+    // Сервисы: правила и сценарии. Без базы, без Next.js, без слоя выше.
     files: ["src/features/*/server/service.ts"],
-    rules: { "no-restricted-imports": restrict([DATABASE, NEXT_RUNTIME]) },
+    rules: { "no-restricted-imports": restrict([...DATABASE, NEXT_RUNTIME, ABOVE_SERVICE]) },
   },
   {
     // Репозитории: только доступ к данным.
     files: ["src/features/*/server/repository.ts"],
-    rules: { "no-restricted-imports": restrict([NEXT_RUNTIME]) },
+    rules: { "no-restricted-imports": restrict([NEXT_RUNTIME, ABOVE_REPOSITORY]) },
   },
   {
-    // Действия, чтение и сессия: связывают Next.js с сервисами, в базу напрямую не ходят.
-    files: ["src/features/*/server/{actions,queries,session,authed-action}.ts"],
-    rules: { "no-restricted-imports": restrict([DATABASE]) },
+    // Действия и чтение: связывают Next.js с сервисами.
+    files: ["src/features/*/server/{actions,queries}.ts"],
+    rules: { "no-restricted-imports": restrict([...DATABASE, REPOSITORY_DIRECTLY]) },
+  },
+  {
+    // Места, где зависимости собираются вместе или где работа с базой — сама суть файла.
+    files: [
+      "src/db/**/*.ts",
+      "src/instrumentation.ts",
+      "src/features/*/server/index.ts",
+      "src/features/auth/server/auth.ts",
+      "src/lib/server/rate-limit.ts",
+      "src/app/api/health/route.ts",
+    ],
+    rules: { "no-restricted-imports": "off" },
   },
   {
     // Тесты могут собирать зависимости напрямую (база в памяти и т. п.).

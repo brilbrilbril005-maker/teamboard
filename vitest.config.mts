@@ -14,7 +14,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "tests/architecture/**/*.test.ts"],
     // Тесты с базой запускают PostgreSQL в памяти и применяют миграции.
     testTimeout: 20_000,
     hookTimeout: 30_000,
@@ -38,6 +38,7 @@ export default defineConfig({
         "src/db/client.ts",
         "src/db/bootstrap.ts",
         "src/db/migrate.ts",
+        "src/db/lock.ts",
         "src/db/types.ts",
         "src/db/schema/index.ts",
       ],
