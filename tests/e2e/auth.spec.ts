@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test, uniqueUsername } from "./fixtures";
+import { PASSWORD, signOut, userMenuButton } from "./helpers";
 
-const PASSWORD = "e2e-password-123";
+const DEMO_NAME = "Анна Смирнова";
 
 // Next.js держит предыдущие страницы в документе скрытыми (см. CLAUDE.md, «Особенности»),
 // поэтому поля ищем по роли — такой поиск видит только то, что видит пользователь.
@@ -25,13 +26,13 @@ test.describe("вход и регистрация", () => {
     await page.getByRole("button", { name: "Войти как демо" }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText("Анна Смирнова").first()).toBeVisible();
-    for (const name of ["Анна Смирнова", "Ольга Кузнецова", "Максим Романов", "Дмитрий Лебедев"]) {
-      await expect(page.getByRole("listitem").filter({ hasText: name })).toBeVisible();
-    }
+    await expect(userMenuButton(page, DEMO_NAME)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Задачи команды" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Подготовить презентацию для клиента", exact: true }),
+    ).toBeVisible();
 
-    await page.getByRole("button", { name: "Выйти" }).click();
-    await expect(page).toHaveURL(/\/login$/);
+    await signOut(page, DEMO_NAME);
 
     await page.goto("/");
     await expect(page).toHaveURL(/\/login$/);
@@ -49,10 +50,12 @@ test.describe("вход и регистрация", () => {
     await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText(`@${username}`).first()).toBeVisible();
+    // Логин виден в меню пользователя.
+    await userMenuButton(page, "Тестовый Пользователь").click();
+    await expect(page.getByRole("menu").getByText(`@${username}`)).toBeVisible();
+    await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: "Выйти" }).click();
-    await expect(page).toHaveURL(/\/login$/);
+    await signOut(page, "Тестовый Пользователь");
 
     // Логин не чувствителен к регистру.
     await loginField(page).fill(username.toUpperCase());
@@ -60,18 +63,18 @@ test.describe("вход и регистрация", () => {
     await page.getByRole("button", { name: "Войти", exact: true }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText("Тестовый Пользователь").first()).toBeVisible();
+    await expect(userMenuButton(page, "Тестовый Пользователь")).toBeVisible();
   });
 
   test("сессия сохраняется после перезагрузки страницы", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("button", { name: "Войти как демо" }).click();
-    await expect(page.getByText("Анна Смирнова").first()).toBeVisible();
+    await expect(userMenuButton(page, DEMO_NAME)).toBeVisible();
 
     await page.reload();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText("Анна Смирнова").first()).toBeVisible();
+    await expect(userMenuButton(page, DEMO_NAME)).toBeVisible();
   });
 
   test("занятый логин зарегистрировать нельзя", async ({ page }) => {
